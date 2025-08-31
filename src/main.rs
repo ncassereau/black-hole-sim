@@ -1,10 +1,5 @@
-use macroquad::prelude::*;
 
-#[macroquad::main("Mon carré")]
+#[macroquad::main("Simulation")]
 async fn main() {
-    loop {
-        clear_background(BLACK);
-        draw_rectangle(100.0, 100.0, 50.0, 50.0, RED);
-        next_frame().await;
-    }
+    black_hole_sim::launch().await;
 }
