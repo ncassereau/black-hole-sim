@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{thread, time::{Duration, Instant}};
 
 use macroquad::prelude::*;
 
@@ -37,13 +37,17 @@ pub async fn launch() {
         scene.add_ray(ray);
     }
 
-
     loop {
+        let start = Instant::now();
         scene.render();
         scene.step();
 
         next_frame().await;
-        thread::sleep(sleep);
+        let elapsed = start.elapsed();
+        if sleep > elapsed {
+            thread::sleep(sleep - elapsed);
+        }
+        println!("{}", start.elapsed().as_millis());
     }
 
 }

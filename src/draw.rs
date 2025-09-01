@@ -26,11 +26,12 @@ pub trait Draw {
 
     fn draw_line(
         &self,
-        coords1: Array1<f64>,
-        coords2: Array1<f64>,
+        coords1: &Array1<f64>,
+        coords2: &Array1<f64>,
         thickness: f32,
         color: Color,
     ) {
+
         draw_line(
             coords1[0] as f32,
             coords1[1] as f32,
