@@ -43,7 +43,7 @@ impl Ray {
         }
     }
 
-    fn push_to_memory(&mut self, new_position: Array1<f64>) -> Result<(), &str> {
+    fn push_to_memory(&mut self, new_position: Array1<f64>) -> Result<(), ()> {
         if let Some(memory) = self.memory.as_mut() {
             self.memory_counter += 1;
             if self.memory_counter % MEMORY_INTERVAL == 0 {
@@ -54,16 +54,15 @@ impl Ray {
             }
             Ok(())
         } else {
-            Err("beurk")
+            Err(())
         }
     }
 
     pub fn step(&mut self, black_hole: &BlackHole, dt: f64) {
-        let old_position = self.position.clone();
-
         if self.r <= black_hole.radius() {
             return;
         } else {
+            let old_position = self.position.clone();
             let (r, dr, phi, dphi) = crate::geodesic::solve_geodesic(
                 self.r,
                 self.dr,
@@ -80,8 +79,8 @@ impl Ray {
 
             let x = self.r * f64::cos(self.phi);
             let y = self.r * f64::sin(self.phi);
-            self.position = Array1::from_vec(vec![x, y]);
             let _ = self.push_to_memory(old_position);
+            self.position = Array1::from_vec(vec![x, y]);
         }
     }
 
