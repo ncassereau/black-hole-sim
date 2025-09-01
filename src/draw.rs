@@ -5,7 +5,6 @@ use ndarray::Array1;
 use crate::scene::Scene;
 
 pub trait Draw {
-
     fn draw(&self, scene: &Scene);
 
     fn draw_circle(&self, coords: Array1<f64>, radius: f64, color: Color) {
@@ -31,7 +30,6 @@ pub trait Draw {
         thickness: f32,
         color: Color,
     ) {
-
         draw_line(
             coords1[0] as f32,
             coords1[1] as f32,
@@ -41,5 +39,4 @@ pub trait Draw {
             color,
         );
     }
-
 }
