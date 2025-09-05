@@ -1,48 +1,21 @@
 use std::ops::{Add, Mul};
 
-#[derive(Clone, Copy)]
-struct State {
-    r: f64,
-    dr: f64,
-    phi: f64,
-    dphi: f64,
-}
+use crate::SphericalState3D;
 
-impl Add for State {
-    type Output = Self;
-    fn add(self, other: Self) -> Self {
-        Self {
-            r: self.r + other.r,
-            dr: self.dr + other.dr,
-            phi: self.phi + other.phi,
-            dphi: self.dphi + other.dphi,
-        }
-    }
-}
+fn geodesic(state: SphericalState3D, rs: f64) -> SphericalState3D {
+    let d2r = state.r() * state.dphi() * state.dphi() * (1.0 - 1.5 * rs / state.r())
+        - crate::SQUARED_SPEED_OF_LIGHT * rs / (2. * state.r() * state.r());
+    let d2theta = 0.;
+    let d2phi = -2.0 * state.dr() * state.dphi() / state.r();
 
-impl Mul<f64> for State {
-    type Output = Self;
-    fn mul(self, rhs: f64) -> Self {
-        Self {
-            r: self.r * rhs,
-            dr: self.dr * rhs,
-            phi: self.phi * rhs,
-            dphi: self.dphi * rhs,
-        }
-    }
-}
-
-fn geodesic(state: &State, rs: f64) -> State {
-    let d2phi = -2.0 * state.dr * state.dphi / state.r;
-    let d2r = state.r * state.dphi * state.dphi * (1.0 - 1.5 * rs / state.r)
-        - crate::SQUARED_SPEED_OF_LIGHT * rs / (2. * state.r * state.r);
-
-    State {
-        r: state.dr,
-        dr: d2r,
-        phi: state.dphi,
-        dphi: d2phi,
-    }
+    SphericalState3D::spherical(
+        state.dr(),
+        state.dtheta(),
+        state.dphi(),
+        d2r,
+        d2theta,
+        d2phi,
+    )
 }
 
 fn runge_kutta_4<T, F>(state: T, h: f64, f: F) -> T
@@ -58,21 +31,7 @@ where
     state + (k1 + k2 * 2.0 + k3 * 2.0 + k4) * (h / 6.0)
 }
 
-pub fn solve_geodesic(
-    r: f64,
-    dr: f64,
-    phi: f64,
-    dphi: f64,
-    rs: f64,
-    h: f64,
-) -> (f64, f64, f64, f64) {
-    let initial_state = State { r, dr, phi, dphi };
-    let f = |state| geodesic(&state, rs);
-    let final_state = runge_kutta_4(initial_state, h, f);
-    (
-        final_state.r,
-        final_state.dr,
-        final_state.phi,
-        final_state.dphi,
-    )
+pub fn solve_geodesic(initial_state: SphericalState3D, rs: f64, h: f64) -> SphericalState3D {
+    let f = |state| geodesic(state, rs);
+    runge_kutta_4(initial_state, h, f)
 }

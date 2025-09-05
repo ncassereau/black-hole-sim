@@ -6,37 +6,36 @@ use std::{
 use macroquad::prelude::*;
 
 mod black_hole;
+mod constants;
 mod draw;
 mod geodesic;
 mod ray;
 mod scene;
+mod vectors;
 
 pub use black_hole::BlackHole;
+pub use constants::*;
 pub use draw::Draw;
 pub use ray::Ray;
 pub use scene::Scene;
-
-pub const SPEED_OF_LIGHT: f64 = 299_792_458.0;
-pub const SQUARED_SPEED_OF_LIGHT: f64 = SPEED_OF_LIGHT * SPEED_OF_LIGHT;
-pub const GRAVITATIONAL_CONSTANT: f64 = 6.67430e-11;
-
-// pub const AU: f64 = 149_597_870_700.0; // mètres
-// pub const SOLAR_MASS: f64 = 1.989e30; // kg
-// Sagittarius A* = 4.15 millions de masses solaires
-
-const SCENE_WIDTH: f64 = 150_000_000_000.;
-const SCENE_HEIGHT: f64 = 150_000_000_000.;
+pub use vectors::*;
 
 pub async fn launch() {
     request_new_screen_size(1920., 1080.);
-    let mut scene = Scene::new(SCENE_WIDTH, SCENE_HEIGHT, BlackHole::sagittarius());
+    let mut scene = Scene::new(
+        crate::SCENE_WIDTH,
+        crate::SCENE_HEIGHT,
+        BlackHole::sagittarius(),
+    );
     let sleep = Duration::from_millis(15);
 
     for i in -20..20 {
         let ray = Ray::new(
             -SCENE_WIDTH / 2.,
             (i as f64 + 0.5) * 3_000_000_000.,
+            0.,
             SPEED_OF_LIGHT,
+            0.,
             0.,
             scene.black_hole().coords(),
         );

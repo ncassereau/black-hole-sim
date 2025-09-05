@@ -1,42 +1,28 @@
 use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line};
-use ndarray::Array1;
 
+use crate::CartesianCoords3D;
 use crate::scene::Scene;
 
 pub trait Draw {
     fn draw(&self, scene: &Scene);
 
-    fn draw_circle(&self, coords: Array1<f64>, radius: f64, color: Color) {
-        draw_circle(
-            coords[0] as f32,
-            coords[1] as f32,
-            (radius - 1.) as f32,
-            color,
-        );
-        draw_circle_lines(
-            coords[0] as f32,
-            coords[1] as f32,
-            (radius - 3.) as f32,
-            2.,
-            color,
-        );
+    fn draw_circle(&self, coords: CartesianCoords3D, radius: f64, color: Color) {
+        let (x, y, _) = coords.unpack_as_f32();
+        let radius = radius as f32;
+        draw_circle(x, y, radius - 1., color);
+        draw_circle_lines(x, y, radius - 3., 2., color);
     }
 
     fn draw_line(
         &self,
-        coords1: &Array1<f64>,
-        coords2: &Array1<f64>,
+        coords1: CartesianCoords3D,
+        coords2: CartesianCoords3D,
         thickness: f32,
         color: Color,
     ) {
-        draw_line(
-            coords1[0] as f32,
-            coords1[1] as f32,
-            coords2[0] as f32,
-            coords2[1] as f32,
-            thickness,
-            color,
-        );
+        let (x1, y1, _) = coords1.unpack_as_f32();
+        let (x2, y2, _) = coords2.unpack_as_f32();
+        draw_line(x1, y1, x2, y2, thickness, color);
     }
 }

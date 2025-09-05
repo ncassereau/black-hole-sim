@@ -1,12 +1,12 @@
 use macroquad::prelude::*;
-use ndarray::Array1;
 
 use crate::BlackHole;
+use crate::CartesianCoords3D;
 use crate::Draw;
 use crate::Ray;
 
 pub struct Scene {
-    scene_size: Array1<f64>,
+    scene_size: CartesianCoords3D,
 
     black_hole: BlackHole,
     rays: Vec<Ray>,
@@ -16,7 +16,7 @@ pub struct Scene {
 
 impl Scene {
     pub fn new(scene_width: f64, scene_height: f64, black_hole: BlackHole) -> Self {
-        let scene_size = Array1::from_vec(vec![scene_width, scene_height]);
+        let scene_size = CartesianCoords3D::cartesian(scene_width, scene_height, 0.);
         let rays = Vec::new();
         Self {
             scene_size,
@@ -33,41 +33,50 @@ impl Scene {
         for ray in &self.rays {
             ray.draw(&self);
         }
-        let center = self.center_coords() / self.size_ratios();
-        draw_circle(center[0] as f32, center[1] as f32, 10., BLUE);
+        let center: CartesianCoords3D = self.center_coords();
+        let ratios: CartesianCoords3D = self.size_ratios();
+        let result: CartesianCoords3D = center / ratios;
+        let (center_x, center_y, _) = result.unpack_as_f32();
+        draw_circle(center_x, center_y, 10., BLUE);
     }
 
-    pub fn scene_size(&self) -> &Array1<f64> {
-        &self.scene_size
+    pub fn scene_size(&self) -> CartesianCoords3D {
+        self.scene_size
     }
 
-    pub fn screen_size(&self) -> Array1<f64> {
-        Array1::from_vec(vec![screen_width() as f64, screen_height() as f64])
+    pub fn screen_size(&self) -> CartesianCoords3D {
+        CartesianCoords3D::cartesian(screen_width() as f64, screen_height() as f64, 0.)
     }
 
-    pub fn center_coords(&self) -> Array1<f64> {
-        &self.scene_size / 2.
+    pub fn center_coords(&self) -> CartesianCoords3D {
+        self.scene_size() / 2.
     }
 
-    pub fn size_ratios(&self) -> Array1<f64> {
+    pub fn size_ratios(&self) -> CartesianCoords3D {
         let screen_size = self.screen_size();
-        &self.scene_size / &screen_size
+        self.scene_size / screen_size
     }
 
-    pub fn to_screen_coords(&self, coords: &Array1<f64>) -> Array1<f64> {
-        // let ratios = self.size_ratios();
-        // (coords + self.center_coords()) / ratios[0].min(ratios[1])
-        let screen_size = self.screen_size();
-        let ratios = self.size_ratios();
-        let uniform_ratio = ratios[0].min(ratios[1]);
+    pub fn min_size_ratio(&self) -> f64 {
+        let (ratio_x, ratio_y, _) = self.size_ratios().unpack();
+        ratio_x.min(ratio_y)
+    }
+
+    pub fn to_screen_coords(&self, coords: CartesianCoords3D) -> CartesianCoords3D {
+        let (screen_width, screen_height, _) = self.screen_size().unpack();
+        let (scene_width, scene_height, _) = self.scene_size().unpack();
+        let uniform_ratio = self.min_size_ratio();
 
         let transformed = (coords + self.center_coords()) / uniform_ratio;
 
-        // Centrer sur l'écran
-        let offset_x = (screen_size[0] - self.scene_size[0] / uniform_ratio) / 2.0;
-        let offset_y = (screen_size[1] - self.scene_size[1] / uniform_ratio) / 2.0;
+        // Center on screen
+        let offset = CartesianCoords3D::cartesian(
+            (screen_width - scene_width / uniform_ratio) / 2.0,
+            (screen_height - scene_height / uniform_ratio) / 2.0,
+            0.,
+        );
 
-        transformed + Array1::from_vec(vec![offset_x, offset_y])
+        transformed + offset
     }
 
     pub fn add_ray(&mut self, ray: Ray) {

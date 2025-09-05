@@ -1,22 +1,21 @@
 use macroquad::prelude::*;
-use ndarray::Array1;
 
+use crate::CartesianCoords3D;
 use crate::Draw;
 use crate::Scene;
 
 pub struct BlackHole {
-    coords: Array1<f64>,
+    coords: CartesianCoords3D,
     radius: f64,
     mass: f64,
 }
 
 impl BlackHole {
     pub fn sagittarius() -> Self {
-        Self::new(0., 0., 8.6e36)
+        Self::new(CartesianCoords3D::new(0., 0., 0.), 8.6e36)
     }
 
-    pub fn new(x: f64, y: f64, mass: f64) -> Self {
-        let coords = Array1::from_vec(vec![x, y]);
+    pub fn new(coords: CartesianCoords3D, mass: f64) -> Self {
         let radius = Self::compute_schwarzschild_radius(&mass);
         Self {
             coords,
@@ -25,7 +24,7 @@ impl BlackHole {
         }
     }
 
-    pub fn coords(&self) -> &Array1<f64> {
+    pub fn coords(&self) -> &CartesianCoords3D {
         &self.coords
     }
 
@@ -44,8 +43,7 @@ impl BlackHole {
 
 impl Draw for BlackHole {
     fn draw(&self, scene: &Scene) {
-        let centered = scene.to_screen_coords(&self.coords);
-        let ratios = scene.size_ratios();
-        self.draw_circle(centered, self.radius / ratios[0].min(ratios[1]), RED);
+        let centered = scene.to_screen_coords(self.coords);
+        self.draw_circle(centered, self.radius / scene.min_size_ratio(), RED);
     }
 }

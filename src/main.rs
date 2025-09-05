@@ -2,7 +2,6 @@
 async fn main() {
     // TODO: use clap for CLI arguments
     // TODO: use log::{info, debug, warn};
-    // TODO: convert ndarray to manual Vec2 struct to avoid heap allocation #[derive(Debug, Clone, Copy)]
 
     // TODO:   // Disque de Shakura-Sunyaev
     //   struct AccretionDisk {
