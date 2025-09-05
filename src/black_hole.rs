@@ -12,7 +12,7 @@ pub struct BlackHole {
 
 impl BlackHole {
     pub fn sagittarius() -> Self {
-        Self::new(CartesianCoords3D::new(0., 0., 0.), 8.6e36)
+        Self::new(CartesianCoords3D::new(0., 0., 0.), 4.15e6 * crate::SOLAR_MASS)
     }
 
     pub fn new(coords: CartesianCoords3D, mass: f64) -> Self {

@@ -128,9 +128,10 @@ impl SphericalCoords3D {
         let theta = self.theta();
         let phi = self.phi();
 
-        let x = r * f64::sin(theta) * f64::cos(phi);
-        let y = r * f64::sin(theta) * f64::sin(phi);
-        let z = r * f64::cos(theta);
+        let r_sin_theta = r * theta.sin();
+        let x = r_sin_theta * phi.cos();
+        let y = r_sin_theta * phi.sin();
+        let z = r * theta.cos();
         CartesianCoords3D::cartesian(x, y, z)
     }
 }
