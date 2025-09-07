@@ -9,7 +9,7 @@ pub struct _Tensor2D<Kind> {
     _phantom: PhantomData<Kind>,
 }
 
-impl<Kind> _Tensor2D<Kind> {
+impl<Kind: Copy> _Tensor2D<Kind> {
     #[inline]
     pub fn new(a: f64, b: f64) -> Self {
         Self {
@@ -28,13 +28,13 @@ impl<Kind> _Tensor2D<Kind> {
     }
 }
 
-impl<Kind, T: From<f64>> Into<(T, T)> for _Tensor2D<Kind> {
+impl<Kind: Copy, T: From<f64>> Into<(T, T)> for _Tensor2D<Kind> {
     fn into(self) -> (T, T) {
         (self.a.into(), self.b.into())
     }
 }
 
-impl<Kind> Add for _Tensor2D<Kind> {
+impl<Kind: Copy> Add for _Tensor2D<Kind> {
     type Output = _Tensor2D<Kind>;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -42,7 +42,7 @@ impl<Kind> Add for _Tensor2D<Kind> {
     }
 }
 
-impl<Kind> Sub for _Tensor2D<Kind> {
+impl<Kind: Copy> Sub for _Tensor2D<Kind> {
     type Output = _Tensor2D<Kind>;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -50,7 +50,7 @@ impl<Kind> Sub for _Tensor2D<Kind> {
     }
 }
 
-impl<Kind> Mul for _Tensor2D<Kind> {
+impl<Kind: Copy> Mul for _Tensor2D<Kind> {
     type Output = _Tensor2D<Kind>;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -58,7 +58,7 @@ impl<Kind> Mul for _Tensor2D<Kind> {
     }
 }
 
-impl<Kind, T: Into<f64>> Mul<T> for _Tensor2D<Kind> {
+impl<Kind: Copy, T: Into<f64>> Mul<T> for _Tensor2D<Kind> {
     type Output = _Tensor2D<Kind>;
 
     fn mul(self, rhs: T) -> Self::Output {
@@ -67,7 +67,7 @@ impl<Kind, T: Into<f64>> Mul<T> for _Tensor2D<Kind> {
     }
 }
 
-impl<Kind> Div for _Tensor2D<Kind> {
+impl<Kind: Copy> Div for _Tensor2D<Kind> {
     type Output = _Tensor2D<Kind>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -78,7 +78,7 @@ impl<Kind> Div for _Tensor2D<Kind> {
     }
 }
 
-impl<Kind, T: Into<f64>> Div<T> for _Tensor2D<Kind> {
+impl<Kind: Copy, T: Into<f64>> Div<T> for _Tensor2D<Kind> {
     type Output = _Tensor2D<Kind>;
 
     fn div(self, rhs: T) -> Self::Output {

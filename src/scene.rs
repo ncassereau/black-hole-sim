@@ -11,19 +11,21 @@ pub struct Scene {
     black_hole: BlackHole,
     rays: Vec<Ray>,
 
-    dλ: f64,
+    dλ0: f64,
 }
 
 impl Scene {
-    pub fn new(scene_width: f64, scene_height: f64, black_hole: BlackHole) -> Self {
-        let scene_size = CartesianCoords2D::cartesian(scene_width, scene_height);
+    pub fn new(scene_width_factor: f64, scene_height_factor: f64, black_hole: BlackHole) -> Self {
+        let radius = black_hole.radius();
+
+        let scene_size =
+            CartesianCoords2D::cartesian(scene_width_factor * radius, scene_height_factor * radius);
         let rays = Vec::new();
-        let dλ = black_hole.radius() / 50.;
         Self {
             scene_size,
             black_hole,
             rays,
-            dλ,
+            dλ0: radius * crate::INTEGRATION_STEP_FACTOR,
         }
     }
 
@@ -34,11 +36,10 @@ impl Scene {
         for ray in &self.rays {
             ray.draw(&self);
         }
-        let center = self.center_coords();
-        let ratios = self.size_ratios();
-        let result = center / ratios;
-        let (center_x, center_y) = result.unpack_as_f32();
-        draw_circle(center_x, center_y, 10., BLUE);
+    }
+
+    pub fn dλ0(&self) -> f64 {
+        self.dλ0
     }
 
     pub fn scene_size(&self) -> CartesianCoords2D {
@@ -86,7 +87,7 @@ impl Scene {
     pub fn step(&mut self) {
         let black_hole = &self.black_hole;
         for ray in &mut self.rays {
-            ray.step(black_hole, self.dλ);
+            ray.step(black_hole);
         }
     }
 

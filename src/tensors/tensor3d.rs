@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Sub};
 
+use crate::Norm;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct _Tensor3D<Kind> {
     pub a: f64,
@@ -10,7 +12,7 @@ pub struct _Tensor3D<Kind> {
     _phantom: PhantomData<Kind>,
 }
 
-impl<Kind> _Tensor3D<Kind> {
+impl<Kind: Copy> _Tensor3D<Kind> {
     #[inline]
     pub fn new(a: f64, b: f64, c: f64) -> Self {
         Self {
@@ -19,10 +21,6 @@ impl<Kind> _Tensor3D<Kind> {
             c,
             _phantom: PhantomData,
         }
-    }
-
-    pub fn magnitude(&self) -> f64 {
-        f64::sqrt(self.a * self.a + self.b * self.b + self.c * self.c)
     }
 
     pub fn unpack(&self) -> (f64, f64, f64) {
@@ -34,13 +32,13 @@ impl<Kind> _Tensor3D<Kind> {
     }
 }
 
-impl<Kind, T: From<f64>> Into<(T, T, T)> for _Tensor3D<Kind> {
+impl<Kind: Copy, T: From<f64>> Into<(T, T, T)> for _Tensor3D<Kind> {
     fn into(self) -> (T, T, T) {
         (self.a.into(), self.b.into(), self.c.into())
     }
 }
 
-impl<Kind> Add for _Tensor3D<Kind> {
+impl<Kind: Copy> Add for _Tensor3D<Kind> {
     type Output = _Tensor3D<Kind>;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -48,7 +46,7 @@ impl<Kind> Add for _Tensor3D<Kind> {
     }
 }
 
-impl<Kind> Sub for _Tensor3D<Kind> {
+impl<Kind: Copy> Sub for _Tensor3D<Kind> {
     type Output = _Tensor3D<Kind>;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -56,7 +54,7 @@ impl<Kind> Sub for _Tensor3D<Kind> {
     }
 }
 
-impl<Kind> Mul for _Tensor3D<Kind> {
+impl<Kind: Copy> Mul for _Tensor3D<Kind> {
     type Output = _Tensor3D<Kind>;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -64,7 +62,7 @@ impl<Kind> Mul for _Tensor3D<Kind> {
     }
 }
 
-impl<Kind, T: Into<f64>> Mul<T> for _Tensor3D<Kind> {
+impl<Kind: Copy, T: Into<f64>> Mul<T> for _Tensor3D<Kind> {
     type Output = _Tensor3D<Kind>;
 
     fn mul(self, rhs: T) -> Self::Output {
@@ -73,7 +71,7 @@ impl<Kind, T: Into<f64>> Mul<T> for _Tensor3D<Kind> {
     }
 }
 
-impl<Kind> Div for _Tensor3D<Kind> {
+impl<Kind: Copy> Div for _Tensor3D<Kind> {
     type Output = _Tensor3D<Kind>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -85,7 +83,13 @@ impl<Kind> Div for _Tensor3D<Kind> {
     }
 }
 
-impl<Kind, T: Into<f64>> Div<T> for _Tensor3D<Kind> {
+impl<Kind: Copy> super::Norm for _Tensor3D<Kind> {
+    fn norm(&self) -> f64 {
+        f64::sqrt(self.a * self.a + self.b * self.b + self.c * self.c)
+    }
+}
+
+impl<Kind: Copy, T: Into<f64>> Div<T> for _Tensor3D<Kind> {
     type Output = _Tensor3D<Kind>;
 
     fn div(self, rhs: T) -> Self::Output {
@@ -162,7 +166,7 @@ impl CartesianCoords3D {
     }
 
     pub fn to_spherical(&self) -> SphericalCoords3D {
-        let r = self.magnitude();
+        let r = self.norm();
         let theta = if r == 0. { 0. } else { f64::acos(self.z() / r) };
         let phi = f64::atan2(self.y(), self.x());
         SphericalCoords3D::spherical(r, theta, phi)

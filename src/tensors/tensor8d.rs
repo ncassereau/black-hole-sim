@@ -17,7 +17,7 @@ pub struct _Tensor8D<Kind> {
     _phantom: PhantomData<Kind>,
 }
 
-impl<Kind> _Tensor8D<Kind> {
+impl<Kind: Copy> _Tensor8D<Kind> {
     #[inline]
     pub fn new(a: f64, b: f64, c: f64, d: f64, e: f64, f: f64, g: f64, h: f64) -> Self {
         Self {
@@ -31,19 +31,6 @@ impl<Kind> _Tensor8D<Kind> {
             h,
             _phantom: PhantomData,
         }
-    }
-
-    pub fn magnitude(self) -> f64 {
-        f64::sqrt(
-            self.a * self.a
-                + self.b * self.b
-                + self.c * self.c
-                + self.d * self.d
-                + self.e * self.e
-                + self.f * self.f
-                + self.g * self.g
-                + self.h * self.h,
-        )
     }
 
     pub fn unpack(self) -> (f64, f64, f64, f64, f64, f64, f64, f64) {
@@ -66,7 +53,7 @@ impl<Kind> _Tensor8D<Kind> {
     }
 }
 
-impl<Kind, T: From<f64>> Into<(T, T, T, T, T, T, T, T)> for _Tensor8D<Kind> {
+impl<Kind: Copy, T: From<f64>> Into<(T, T, T, T, T, T, T, T)> for _Tensor8D<Kind> {
     fn into(self) -> (T, T, T, T, T, T, T, T) {
         (
             self.a.into(),
@@ -81,7 +68,7 @@ impl<Kind, T: From<f64>> Into<(T, T, T, T, T, T, T, T)> for _Tensor8D<Kind> {
     }
 }
 
-impl<Kind> Add for _Tensor8D<Kind> {
+impl<Kind: Copy> Add for _Tensor8D<Kind> {
     type Output = _Tensor8D<Kind>;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -98,7 +85,7 @@ impl<Kind> Add for _Tensor8D<Kind> {
     }
 }
 
-impl<Kind> Sub for _Tensor8D<Kind> {
+impl<Kind: Copy> Sub for _Tensor8D<Kind> {
     type Output = _Tensor8D<Kind>;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -115,7 +102,7 @@ impl<Kind> Sub for _Tensor8D<Kind> {
     }
 }
 
-impl<Kind> Mul for _Tensor8D<Kind> {
+impl<Kind: Copy> Mul for _Tensor8D<Kind> {
     type Output = _Tensor8D<Kind>;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -132,7 +119,7 @@ impl<Kind> Mul for _Tensor8D<Kind> {
     }
 }
 
-impl<Kind, T: Into<f64>> Mul<T> for _Tensor8D<Kind> {
+impl<Kind: Copy, T: Into<f64>> Mul<T> for _Tensor8D<Kind> {
     type Output = _Tensor8D<Kind>;
 
     fn mul(self, rhs: T) -> Self::Output {
@@ -150,7 +137,7 @@ impl<Kind, T: Into<f64>> Mul<T> for _Tensor8D<Kind> {
     }
 }
 
-impl<Kind> Div for _Tensor8D<Kind> {
+impl<Kind: Copy> Div for _Tensor8D<Kind> {
     type Output = _Tensor8D<Kind>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -167,7 +154,22 @@ impl<Kind> Div for _Tensor8D<Kind> {
     }
 }
 
-impl<Kind, T: Into<f64>> Div<T> for _Tensor8D<Kind> {
+impl<Kind: Copy> super::Norm for _Tensor8D<Kind> {
+    fn norm(&self) -> f64 {
+        f64::sqrt(
+            self.a * self.a
+                + self.b * self.b
+                + self.c * self.c
+                + self.d * self.d
+                + self.e * self.e
+                + self.f * self.f
+                + self.g * self.g
+                + self.h * self.h,
+        )
+    }
+}
+
+impl<Kind: Copy, T: Into<f64>> Div<T> for _Tensor8D<Kind> {
     type Output = _Tensor8D<Kind>;
 
     fn div(self, rhs: T) -> Self::Output {

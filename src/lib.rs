@@ -23,17 +23,20 @@ pub use tensors::*;
 pub async fn launch() {
     request_new_screen_size(1920., 1080.);
     let mut scene = Scene::new(
-        crate::SCENE_WIDTH,
-        crate::SCENE_HEIGHT,
+        crate::SCENE_WIDTH_FACTOR,
+        crate::SCENE_HEIGHT_FACTOR,
         BlackHole::sagittarius(),
     );
     let sleep = Duration::from_millis(15);
 
-    for i in -20..20 {
+    let n_rays = 100;
+    let (scene_width, scene_height) = scene.scene_size().unpack();
+    let x0 = -scene_width / 2.;
+    for i in -n_rays..n_rays {
         let ray = Ray::new(
             CartesianState3D::cartesian(
-                -SCENE_WIDTH / 2.,
-                (i as f64 + 0.5) * 3_000_000_000.,
+                x0,
+                i as f64 * scene_height / n_rays as f64,
                 0.,
                 1.,
                 0.,
@@ -41,6 +44,7 @@ pub async fn launch() {
             ),
             scene.black_hole().coords(),
             scene.black_hole().radius(),
+            scene.dλ0(),
         );
         scene.add_ray(ray);
     }

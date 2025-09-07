@@ -10,12 +10,18 @@ const INVERSE_MEM_LENGTH: f32 = 1. / MEMORY_LENGTH as f32;
 
 pub struct Ray {
     state: SphericalState4D,
+    dλ: f64,
     memory: Option<VecDeque<CartesianCoords4D>>,
     memory_counter: usize,
 }
 
 impl Ray {
-    pub fn new(spatial_state: CartesianState3D, reference: &CartesianCoords4D, rs: f64) -> Self {
+    pub fn new(
+        spatial_state: CartesianState3D,
+        reference: &CartesianCoords4D,
+        rs: f64,
+        dλ0: f64,
+    ) -> Self {
         let (_, x_ref, y_ref, z_ref) = reference.unpack();
         let centered_state = CartesianState3D::cartesian(
             spatial_state.x() - x_ref,
@@ -28,6 +34,7 @@ impl Ray {
 
         Self {
             state: centered_state.to_spherical().to_4d(rs),
+            dλ: dλ0,
             memory: Some(VecDeque::new()),
             memory_counter: 0,
         }
@@ -48,14 +55,22 @@ impl Ray {
         }
     }
 
-    pub fn step(&mut self, black_hole: &BlackHole, dλ: f64) {
+    pub fn step(&mut self, black_hole: &BlackHole) {
         if self.state.r() <= black_hole.radius() {
             return;
         }
 
-        self.state = crate::geodesic::solve_geodesic(self.state, black_hole.radius(), dλ);
+        let (state, dλ, success) =
+            crate::geodesic::solve_geodesic_rkf45(self.state, black_hole.radius(), self.dλ);
 
-        if self.state.r() <= black_hole.radius() {
+        if !success {
+            return;
+        }
+
+        self.state = state;
+        self.dλ = dλ;
+
+        if state.r() <= black_hole.radius() || state.r() < 0. {
             return;
         }
         let _ = self.push_to_memory(self.state.position().to_cartesian());
