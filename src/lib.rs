@@ -31,13 +31,16 @@ pub async fn launch() {
 
     for i in -20..20 {
         let ray = Ray::new(
-            -SCENE_WIDTH / 2.,
-            (i as f64 + 0.5) * 3_000_000_000.,
-            0.,
-            SPEED_OF_LIGHT,
-            0.,
-            0.,
+            CartesianState3D::cartesian(
+                -SCENE_WIDTH / 2.,
+                (i as f64 + 0.5) * 3_000_000_000.,
+                0.,
+                1.,
+                0.,
+                0.,
+            ),
             scene.black_hole().coords(),
+            scene.black_hole().radius(),
         );
         scene.add_ray(ray);
     }
@@ -53,6 +56,6 @@ pub async fn launch() {
         if sleep > elapsed {
             thread::sleep(sleep - elapsed);
         }
-        println!("{}", start.elapsed().as_millis());
+        println!("{}", start.elapsed().as_micros());
     }
 }

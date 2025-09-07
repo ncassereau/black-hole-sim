@@ -18,11 +18,12 @@ impl Scene {
     pub fn new(scene_width: f64, scene_height: f64, black_hole: BlackHole) -> Self {
         let scene_size = CartesianCoords2D::cartesian(scene_width, scene_height);
         let rays = Vec::new();
+        let dλ = black_hole.radius() / 50.;
         Self {
             scene_size,
             black_hole,
             rays,
-            dλ: 1.,
+            dλ,
         }
     }
 

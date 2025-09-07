@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 use std::collections::VecDeque;
 
 use crate::{BlackHole, Draw, Scene};
-use crate::{CartesianCoords4D, CartesianState4D, SphericalState4D};
+use crate::{CartesianCoords4D, CartesianState3D, SphericalState4D};
 
 const MEMORY_LENGTH: usize = 256;
 const MEMORY_INTERVAL: usize = 1;
@@ -15,21 +15,19 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub fn new(
-        x: f64,
-        y: f64,
-        z: f64,
-        dx: f64,
-        dy: f64,
-        dz: f64,
-        reference: &CartesianCoords4D,
-    ) -> Self {
-        let (t_ref, x_ref, y_ref, z_ref) = reference.unpack();
-        let state =
-            CartesianState4D::cartesian(t_ref, x - x_ref, y - y_ref, z - z_ref, 0., dx, dy, dz);
+    pub fn new(spatial_state: CartesianState3D, reference: &CartesianCoords4D, rs: f64) -> Self {
+        let (_, x_ref, y_ref, z_ref) = reference.unpack();
+        let centered_state = CartesianState3D::cartesian(
+            spatial_state.x() - x_ref,
+            spatial_state.y() - y_ref,
+            spatial_state.z() - z_ref,
+            spatial_state.dx(),
+            spatial_state.dy(),
+            spatial_state.dz(),
+        );
 
         Self {
-            state: state.to_spherical(),
+            state: centered_state.to_spherical().to_4d(rs),
             memory: Some(VecDeque::new()),
             memory_counter: 0,
         }
@@ -57,6 +55,9 @@ impl Ray {
 
         self.state = crate::geodesic::solve_geodesic(self.state, black_hole.radius(), dλ);
 
+        if self.state.r() <= black_hole.radius() {
+            return;
+        }
         let _ = self.push_to_memory(self.state.position().to_cartesian());
     }
 }

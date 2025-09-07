@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Sub};
 
-use crate::{CartesianCoords3D, SphericalCoords3D};
+use crate::{CartesianCoords3D, SphericalCoords3D, SphericalState4D};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct _Tensor6D<Kind> {
@@ -212,8 +212,31 @@ impl SphericalState3D {
         SphericalCoords3D::spherical(self.r(), self.theta(), self.phi())
     }
 
-    pub fn velocity(&self) -> SphericalCoords3D {
-        SphericalCoords3D::spherical(self.dr(), self.dtheta(), self.dphi())
+    fn initial_dt(&self, rs: f64) -> f64 {
+        let r = self.r();
+        let r2 = r.powi(2);
+        let theta = self.theta();
+
+        let denom = 1.0 - rs / r;
+
+        let num_part1 = (1.0 / denom) * self.dr().powi(2);
+        let num_part2 = r2 * self.dtheta().powi(2);
+        let num_part3 = r2 * (theta.sin() * self.dphi()).powi(2);
+
+        f64::sqrt((num_part1 + num_part2 + num_part3) / denom)
+    }
+
+    pub fn to_4d(&self, rs: f64) -> SphericalState4D {
+        SphericalState4D::spherical(
+            0.,
+            self.r(),
+            self.theta(),
+            self.phi(),
+            self.initial_dt(rs),
+            self.dr(),
+            self.dtheta(),
+            self.dphi(),
+        )
     }
 
     pub fn to_cartesian(&self) -> CartesianState3D {
@@ -294,10 +317,6 @@ impl CartesianState3D {
 
     pub fn position(&self) -> crate::CartesianCoords3D {
         CartesianCoords3D::cartesian(self.x(), self.y(), self.z())
-    }
-
-    pub fn velocity(&self) -> crate::CartesianCoords3D {
-        CartesianCoords3D::cartesian(self.dx(), self.dy(), self.dz())
     }
 
     pub fn to_spherical(&self) -> SphericalState3D {

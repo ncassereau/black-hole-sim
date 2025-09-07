@@ -3,11 +3,29 @@ use std::ops::{Add, Mul};
 use crate::SphericalState4D;
 
 fn geodesic(state: SphericalState4D, rs: f64) -> SphericalState4D {
-    let d2t = 0.;
-    let d2r = state.r() * state.dphi() * state.dphi() * (1.0 - 1.5 * rs / state.r())
-        - crate::SQUARED_SPEED_OF_LIGHT * rs / (2. * state.r() * state.r());
-    let d2theta = 0.;
-    let d2phi = -2.0 * state.dr() * state.dphi() / state.r();
+    let (sin_theta, cos_theta) = state.theta().sin_cos();
+    let altitude = (state.r() - rs).max(crate::DIV_EPSILON);
+
+    let d2t = -rs * state.dr() * state.dt() / (state.r() * altitude);
+
+    let d2r = {
+        let term1 = rs * altitude * state.dt().powi(2) / (2.0 * state.r().powi(3));
+        let term2 = rs / (2.0 * state.r() * altitude) * state.dr().powi(2);
+        let term3 = state.dtheta().powi(2) + (sin_theta * state.dphi()).powi(2);
+        term1 - term2 - altitude * term3
+    };
+
+    let d2theta = {
+        let term1 = -2.0 * state.dr() * state.dtheta() / state.r();
+        let term2 = sin_theta * cos_theta * state.dphi().powi(2);
+        term1 + term2
+    };
+
+    let d2phi = {
+        let term1 = state.dr() * state.dphi() / state.r();
+        let term2 = state.dtheta() * state.dphi() * cos_theta / sin_theta;
+        -2.0 * (term1 + term2)
+    };
 
     SphericalState4D::spherical(
         state.dt(),
