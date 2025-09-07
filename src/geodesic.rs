@@ -1,17 +1,20 @@
 use std::ops::{Add, Mul};
 
-use crate::SphericalState3D;
+use crate::SphericalState4D;
 
-fn geodesic(state: SphericalState3D, rs: f64) -> SphericalState3D {
+fn geodesic(state: SphericalState4D, rs: f64) -> SphericalState4D {
+    let d2t = 0.;
     let d2r = state.r() * state.dphi() * state.dphi() * (1.0 - 1.5 * rs / state.r())
         - crate::SQUARED_SPEED_OF_LIGHT * rs / (2. * state.r() * state.r());
     let d2theta = 0.;
     let d2phi = -2.0 * state.dr() * state.dphi() / state.r();
 
-    SphericalState3D::spherical(
+    SphericalState4D::spherical(
+        state.dt(),
         state.dr(),
         state.dtheta(),
         state.dphi(),
+        d2t,
         d2r,
         d2theta,
         d2phi,
@@ -31,7 +34,7 @@ where
     state + (k1 + k2 * 2.0 + k3 * 2.0 + k4) * (h / 6.0)
 }
 
-pub fn solve_geodesic(initial_state: SphericalState3D, rs: f64, h: f64) -> SphericalState3D {
+pub fn solve_geodesic(initial_state: SphericalState4D, rs: f64, h: f64) -> SphericalState4D {
     let f = |state| geodesic(state, rs);
     runge_kutta_4(initial_state, h, f)
 }
