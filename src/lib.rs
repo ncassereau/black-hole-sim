@@ -27,7 +27,7 @@ pub async fn launch() {
         crate::SCENE_HEIGHT_FACTOR,
         BlackHole::sagittarius(),
     );
-    let sleep = Duration::from_millis(15);
+    let sleep = Duration::from_millis(30);
 
     let n_rays = 100;
     let (scene_width, scene_height) = scene.scene_size().unpack();

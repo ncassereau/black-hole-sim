@@ -12,7 +12,7 @@ fn geodesic(state: SphericalState4D, rs: f64) -> SphericalState4D {
         let term1 = rs * altitude * state.dt().powi(2) / (2.0 * state.r().powi(3));
         let term2 = rs / (2.0 * state.r() * altitude) * state.dr().powi(2);
         let term3 = state.dtheta().powi(2) + (sin_theta * state.dphi()).powi(2);
-        term1 - term2 - altitude * term3
+        -term1 + term2 + altitude * term3
     };
 
     let d2theta = {
