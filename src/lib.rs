@@ -11,14 +11,14 @@ mod draw;
 mod geodesic;
 mod ray;
 mod scene;
-mod vectors;
+mod tensors;
 
 pub use black_hole::BlackHole;
 pub use constants::*;
 pub use draw::Draw;
 pub use ray::Ray;
 pub use scene::Scene;
-pub use vectors::*;
+pub use tensors::*;
 
 pub async fn launch() {
     request_new_screen_size(1920., 1080.);
