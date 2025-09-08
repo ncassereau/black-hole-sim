@@ -26,6 +26,25 @@ impl<Kind: Copy> _Tensor3D<Kind> {
         self.a * rhs.a + self.b * rhs.b + self.c * rhs.c
     }
 
+    pub fn cross(&self, rhs: Self) -> Self {
+        Self::new(
+            self.b * rhs.c - self.c * rhs.b,
+            self.c * rhs.a - self.a * rhs.c,
+            self.a * rhs.b - self.b * rhs.a,
+        )
+    }
+
+    pub fn rotate_around_axis(self, axis: Self, angle_rad: f64) -> Self {
+        let (sin_a, cos_a) = angle_rad.sin_cos();
+        let u = axis.normalize();
+
+        let term1 = self * cos_a;
+        let term2 = u.cross(self) * sin_a;
+        let term3 = u * u.dot(self) * (1.0 - cos_a);
+
+        term1 + term2 + term3
+    }
+
     pub fn unpack(&self) -> (f64, f64, f64) {
         (self.a, self.b, self.c)
     }

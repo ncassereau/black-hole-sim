@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Sub};
 
-use crate::{CartesianCoords2D, Norm};
+use crate::{CartesianCoords2D, CartesianCoords3D, Norm};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct _Tensor4D<Kind> {
@@ -197,6 +197,10 @@ impl CartesianCoords4D {
     }
     pub fn unpack_xy_as_f32(self) -> (f32, f32) {
         (self.x() as f32, self.y() as f32)
+    }
+
+    pub fn position(&self) -> CartesianCoords3D {
+        CartesianCoords3D::cartesian(self.x(), self.y(), self.z())
     }
 
     pub fn to_spherical(&self) -> SphericalCoords4D {

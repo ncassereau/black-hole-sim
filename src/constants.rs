@@ -3,6 +3,8 @@ use macroquad::color::{BLACK, Color};
 pub const SPEED_OF_LIGHT: f64 = 299_792_458.0; // m/s
 pub const GRAVITATIONAL_CONSTANT: f64 = 6.67430e-11;
 pub const DIV_EPSILON: f64 = 1e-8;
+pub const CAMERA_THETA_EPSILON: f64 = 1e-3;
+pub const CAMERA_ROTATION_SENSITIVITY: f64 = 1.;
 
 pub const AU: f64 = 149_597_870_700.0; // meters
 
@@ -13,9 +15,10 @@ pub const BLACK_HOLE_COLORED_SPHERE_RADIUS_FACTOR: f64 = 1.01; // needs to be > 
 
 pub const INTEGRATION_STEP_FACTOR: f64 = 0.1;
 pub const NUM_INTEGRATION_STEPS: usize = 1000;
+pub const NORMALIZATION_INTERVAL: usize = 10;
 
 pub const RKF45_TOLERANCE_FACTOR: f64 = 1e-8;
-pub const RKF45_MIN_STEP_FACTOR: f64 = 1e-6;
+pub const RKF45_MIN_STEP_FACTOR: f64 = 1e-4;
 pub const RKF45_MAX_STEP_FACTOR: f64 = 1e2;
 pub const RKF45_RETRIES: usize = 80;
 

@@ -26,16 +26,8 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(spatial_state: CartesianState3D, rs: f64, dλ0: f64) -> Self {
-        let centered_state = CartesianState3D::cartesian(
-            spatial_state.x(),
-            spatial_state.y(),
-            spatial_state.z(),
-            spatial_state.dx(),
-            spatial_state.dy(),
-            spatial_state.dz(),
-        );
         Self {
-            state: centered_state.to_spherical().to_4d(rs),
+            state: spatial_state.to_spherical().to_4d(rs),
             dλ: dλ0,
         }
     }
@@ -51,10 +43,7 @@ impl Ray {
 
         let (state, dλ) =
             match crate::geodesic::solve_geodesic_rkf45(self.state, black_hole.radius(), self.dλ) {
-                Ok((state, dλ)) => {
-                    let state = state.renormalize(black_hole.radius());
-                    (state, dλ)
-                }
+                Ok((state, dλ)) => (state, dλ),
                 Err(_) => {
                     if self.state.r() < black_hole.visual_radius() {
                         // RKF Step failed because we are very close to Black Hole. We therefore consider that we fell into it.
@@ -98,8 +87,12 @@ impl Ray {
                     break criterion;
                 }
                 counter += 1;
-                if counter > crate::NUM_INTEGRATION_STEPS {
+                if counter >= crate::NUM_INTEGRATION_STEPS {
                     break StoppingCriterion::OutOfBoundingBox;
+                }
+
+                if counter % crate::NORMALIZATION_INTERVAL == 0 {
+                    self.state = self.state.renormalize(black_hole.radius());
                 }
             }
         };

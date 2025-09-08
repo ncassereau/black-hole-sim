@@ -11,7 +11,7 @@ pub struct AccretionDisk {
 impl AccretionDisk {
     pub fn new(rs: f64) -> Self {
         let r_isco = rs * 3.;
-        let accretion_r_max = rs * 50.;
+        let accretion_r_max = rs * 12.;
         Self {
             r_isco,
             accretion_r_max,

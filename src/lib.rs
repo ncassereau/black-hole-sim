@@ -21,7 +21,7 @@ pub use tensors::*;
 pub use threading::*;
 
 pub async fn launch() {
-    let scene = Scene::new(
+    let mut scene = Scene::new(
         crate::SCENE_WIDTH_FACTOR,
         crate::SCENE_HEIGHT_FACTOR,
         BlackHole::sagittarius(),
@@ -30,18 +30,22 @@ pub async fn launch() {
 
     clear_background(BLACK);
     next_frame().await;
+    scene.rotate_camera(0., -10.);
+    println!("{:?}", scene.camera().position());
 
-    let image = scene.get_image();
-    let texture = Texture2D::from_image(&image);
     loop {
         let start = Instant::now();
-
+        clear_background(BLACK);
+        let image = scene.get_image();
+        let texture = Texture2D::from_image(&image);
         draw_texture(&texture, 0., 0., WHITE); // Last color is the Hue, we want None
+
         next_frame().await;
         let elapsed = start.elapsed();
         if sleep > elapsed {
             thread::sleep(sleep - elapsed);
         }
         println!("{}", start.elapsed().as_micros());
+        // scene.rotate_camera(0., -10.);
     }
 }
