@@ -16,7 +16,6 @@ pub struct _Tensor6D<Kind> {
 }
 
 impl<Kind: Copy> _Tensor6D<Kind> {
-    #[inline]
     pub fn new(a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) -> Self {
         Self {
             a,
@@ -168,7 +167,6 @@ pub type CartesianState3D = _Tensor6D<super::Cartesian>;
 pub type Tensor6D = _Tensor6D<()>;
 
 impl SphericalState3D {
-    #[inline]
     pub fn spherical(r: f64, theta: f64, phi: f64, dr: f64, dtheta: f64, dphi: f64) -> Self {
         Self::new(r, theta, phi, dr, dtheta, dphi)
     }
@@ -224,7 +222,8 @@ impl SphericalState3D {
             self.dr(),
             self.dtheta(),
             self.dphi(),
-        ).renormalize(rs)
+        )
+        .renormalize(rs)
     }
 
     pub fn to_cartesian(&self) -> CartesianState3D {
@@ -261,7 +260,6 @@ impl SphericalState3D {
 }
 
 impl CartesianState3D {
-    #[inline]
     pub fn cartesian(x: f64, y: f64, z: f64, dx: f64, dy: f64, dz: f64) -> Self {
         Self::new(x, y, z, dx, dy, dz)
     }

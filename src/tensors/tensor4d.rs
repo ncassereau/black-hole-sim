@@ -14,7 +14,6 @@ pub struct _Tensor4D<Kind> {
 }
 
 impl<Kind: Copy> _Tensor4D<Kind> {
-    #[inline]
     pub fn new(a: f64, b: f64, c: f64, d: f64) -> Self {
         Self {
             a,
@@ -121,7 +120,6 @@ pub type CartesianCoords4D = _Tensor4D<super::Cartesian>;
 pub type Tensor4D = _Tensor4D<()>;
 
 impl SphericalCoords4D {
-    #[inline]
     pub fn spherical(t: f64, r: f64, theta: f64, phi: f64) -> Self {
         Self::new(t, r, theta, phi)
     }
@@ -165,7 +163,6 @@ impl SphericalCoords4D {
 }
 
 impl CartesianCoords4D {
-    #[inline]
     pub fn cartesian(t: f64, x: f64, y: f64, z: f64) -> Self {
         Self::new(t, x, y, z)
     }

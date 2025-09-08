@@ -13,7 +13,6 @@ pub struct _Tensor3D<Kind> {
 }
 
 impl<Kind: Copy> _Tensor3D<Kind> {
-    #[inline]
     pub fn new(a: f64, b: f64, c: f64) -> Self {
         Self {
             a,
@@ -21,6 +20,10 @@ impl<Kind: Copy> _Tensor3D<Kind> {
             c,
             _phantom: PhantomData,
         }
+    }
+
+    pub fn dot(&self, rhs: Self) -> f64 {
+        self.a * rhs.a + self.b * rhs.b + self.c * rhs.c
     }
 
     pub fn unpack(&self) -> (f64, f64, f64) {
@@ -103,7 +106,6 @@ pub type CartesianCoords3D = _Tensor3D<super::Cartesian>;
 pub type Tensor3D = _Tensor3D<()>;
 
 impl SphericalCoords3D {
-    #[inline]
     pub fn spherical(r: f64, theta: f64, phi: f64) -> Self {
         Self::new(r, theta, phi)
     }
@@ -141,7 +143,6 @@ impl SphericalCoords3D {
 }
 
 impl CartesianCoords3D {
-    #[inline]
     pub fn cartesian(x: f64, y: f64, z: f64) -> Self {
         Self::new(x, y, z)
     }

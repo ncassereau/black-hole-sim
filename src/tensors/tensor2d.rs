@@ -10,7 +10,6 @@ pub struct _Tensor2D<Kind> {
 }
 
 impl<Kind: Copy> _Tensor2D<Kind> {
-    #[inline]
     pub fn new(a: f64, b: f64) -> Self {
         Self {
             a,
@@ -91,7 +90,6 @@ pub type CartesianCoords2D = _Tensor2D<super::Cartesian>;
 pub type Tensor2D = _Tensor2D<()>;
 
 impl CartesianCoords2D {
-    #[inline]
     pub fn cartesian(x: f64, y: f64) -> Self {
         Self::new(x, y)
     }

@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::ops::{Add, Div, Mul, Sub};
 
-use crate::{CartesianCoords4D, SphericalCoords4D};
+use crate::{CartesianCoords4D, SphericalCoords3D, SphericalCoords4D};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct _Tensor8D<Kind> {
@@ -18,7 +18,6 @@ pub struct _Tensor8D<Kind> {
 }
 
 impl<Kind: Copy> _Tensor8D<Kind> {
-    #[inline]
     pub fn new(a: f64, b: f64, c: f64, d: f64, e: f64, f: f64, g: f64, h: f64) -> Self {
         Self {
             a,
@@ -192,7 +191,6 @@ pub type CartesianState4D = _Tensor8D<super::Cartesian>;
 pub type Tensor8D = _Tensor8D<()>;
 
 impl SphericalState4D {
-    #[inline]
     pub fn spherical(
         t: f64,
         r: f64,
@@ -259,6 +257,14 @@ impl SphericalState4D {
         SphericalCoords4D::spherical(self.t(), self.r(), self.theta(), self.phi())
     }
 
+    pub fn spatial_position(&self) -> SphericalCoords3D {
+        SphericalCoords3D::spherical(self.r(), self.theta(), self.phi())
+    }
+
+    pub fn spatial_velocity(&self) -> SphericalCoords3D {
+        SphericalCoords3D::spherical(self.dr(), self.dtheta(), self.dphi())
+    }
+
     pub fn renormalize(self, rs: f64) -> Self {
         let r = self.r();
         let r2 = r.powi(2);
@@ -317,7 +323,6 @@ impl SphericalState4D {
 }
 
 impl CartesianState4D {
-    #[inline]
     pub fn cartesian(t: f64, x: f64, y: f64, z: f64, dt: f64, dx: f64, dy: f64, dz: f64) -> Self {
         Self::new(t, x, y, z, dt, dx, dy, dz)
     }

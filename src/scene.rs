@@ -3,7 +3,6 @@ use macroquad::prelude::*;
 use crate::BlackHole;
 use crate::Norm;
 use crate::Ray;
-use crate::black_hole;
 use crate::{CartesianCoords2D, CartesianCoords3D, CartesianCoords4D, CartesianState3D};
 
 pub struct Scene {
@@ -76,6 +75,28 @@ impl Scene {
         self.black_hole
     }
 
+    pub fn get_pixel_color(
+        camera: CartesianCoords3D,
+        ray_direction: CartesianCoords3D,
+        black_hole: BlackHole,
+        dλ0: f64,
+    ) -> Color {
+        let mut ray = Ray::new(
+            CartesianState3D::cartesian(
+                camera.x(),
+                camera.y(),
+                camera.z(),
+                ray_direction.x(),
+                ray_direction.y(),
+                ray_direction.z(),
+            ),
+            black_hole.radius(),
+            dλ0,
+        );
+        let bounding_box_radius = black_hole.radius() * crate::BOUNDING_BOX_FACTOR;
+        ray.get_color(black_hole, bounding_box_radius)
+    }
+
     pub fn get_image(&self) -> Image {
         let (screen_width, screen_height) = self.screen_size().unpack();
 
@@ -99,19 +120,11 @@ impl Scene {
                 let dλ0 = self.dλ0();
 
                 pool.execute(move || {
-                    let mut ray = Ray::new(
-                        CartesianState3D::cartesian(
-                            camera_clone.x(),
-                            camera_clone.y(),
-                            camera_clone.z(),
-                            ray_direction.x(),
-                            ray_direction.y(),
-                            ray_direction.z(),
-                        ),
-                        black_hole.radius(),
-                        dλ0,
-                    );
-                    (px, py, ray.get_color(black_hole))
+                    (
+                        px,
+                        py,
+                        Self::get_pixel_color(camera_clone, ray_direction, black_hole, dλ0),
+                    )
                 });
 
                 counter += 1;

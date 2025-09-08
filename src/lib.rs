@@ -7,7 +7,6 @@ use macroquad::prelude::*;
 
 mod black_hole;
 mod constants;
-mod draw;
 mod geodesic;
 mod ray;
 mod scene;
@@ -16,7 +15,6 @@ mod threading;
 
 pub use black_hole::BlackHole;
 pub use constants::*;
-pub use draw::Draw;
 pub use ray::Ray;
 pub use scene::Scene;
 pub use tensors::*;
@@ -38,7 +36,7 @@ pub async fn launch() {
     loop {
         let start = Instant::now();
 
-        draw_texture(&texture, 0., 0., RED);
+        draw_texture(&texture, 0., 0., WHITE); // Last color is the Hue, we want None
         next_frame().await;
         let elapsed = start.elapsed();
         if sleep > elapsed {
