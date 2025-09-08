@@ -39,12 +39,15 @@ impl AccretionDisk {
     pub fn get_color(&self, radius: f64) -> Option<Color> {
         if radius >= self.r_isco && radius < self.accretion_r_max {
             let u = (radius - self.r_isco) / (self.accretion_r_max - self.r_isco);
-            let brightness = (1.0 - u).powf(2.0);
+
+            let brightness_factor = (1.0 - u).powf(2.0);
+            let alpha_factor = (1.0 - u).powf(0.5);
+
             Some(Color::new(
-                1.0 * brightness as f32,
-                0.6 * brightness as f32,
+                1.0 * brightness_factor as f32,
+                0.6 * brightness_factor as f32,
                 0.0,
-                1.0,
+                alpha_factor as f32,
             ))
         } else {
             None
@@ -77,7 +80,7 @@ impl BlackHole {
             visual_radius,
             accretion_disk,
             mass,
-            color: WHITE,
+            color: BLACK,
         }
     }
 

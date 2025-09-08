@@ -9,13 +9,41 @@ pub enum StoppingCriterion {
     CrossedAccretionDisk(f64),
 }
 
-fn determine_color(stopping_criterion: StoppingCriterion, black_hole: BlackHole) -> Color {
+fn determine_color(stopping_criterion: &StoppingCriterion, black_hole: BlackHole) -> Color {
     match stopping_criterion {
         StoppingCriterion::EnteredEventHorizon => black_hole.color(),
         StoppingCriterion::OutOfBoundingBox => crate::BACKGROUND_COLOR,
         StoppingCriterion::CrossedAccretionDisk(r) => {
-            black_hole.accretion_disk().get_color(r).unwrap()
+            black_hole.accretion_disk().get_color(*r).unwrap()
         } // We can unwrap safely because this Criterion is only trigged when we are within the accretion disk
+    }
+}
+
+fn blend(foreground: Color, background: Color) -> Color {
+    let alpha = foreground.a;
+    if alpha >= 1.0 {
+        return foreground;
+    }
+    if alpha <= 0.0 {
+        return background;
+    }
+
+    let r = foreground.r * alpha + background.r * (1.0 - alpha);
+    let g = foreground.g * alpha + background.g * (1.0 - alpha);
+    let b = foreground.b * alpha + background.b * (1.0 - alpha);
+
+    let new_alpha = alpha + background.a * (1. - alpha);
+
+    Color::new(r / new_alpha, g / new_alpha, b / new_alpha, new_alpha)
+}
+
+fn gamma_correct(linear_color: Color) -> Color {
+    const INVERSE_GAMMA: f32 = 1.0 / 2.2;
+    Color {
+        r: linear_color.r.powf(INVERSE_GAMMA),
+        g: linear_color.g.powf(INVERSE_GAMMA),
+        b: linear_color.b.powf(INVERSE_GAMMA),
+        a: linear_color.a,
     }
 }
 
@@ -80,22 +108,25 @@ impl Ray {
     }
 
     pub fn get_color(&mut self, black_hole: BlackHole, bounding_box_radius: f64) -> Color {
-        let stopping_criterion = {
-            let mut counter = 0;
-            loop {
-                if let Some(criterion) = self.step(black_hole, bounding_box_radius) {
-                    break criterion;
-                }
-                counter += 1;
-                if counter >= crate::NUM_INTEGRATION_STEPS {
-                    break StoppingCriterion::OutOfBoundingBox;
-                }
+        let mut accumulated_color = Color::new(0.0, 0.0, 0.0, 0.0);
 
-                if counter % crate::NORMALIZATION_INTERVAL == 0 {
-                    self.state = self.state.renormalize(black_hole.radius());
+        for i in 0..crate::NUM_INTEGRATION_STEPS {
+            if i > 0 && i % crate::NORMALIZATION_INTERVAL == 0 {
+                self.state = self.state.renormalize(black_hole.radius());
+            }
+
+            if let Some(criterion) = self.step(black_hole, bounding_box_radius) {
+                let hit_color = determine_color(&criterion, black_hole);
+                accumulated_color = blend(accumulated_color, hit_color);
+
+                if accumulated_color.a >= 0.999 {
+                    break;
                 }
             }
-        };
-        determine_color(stopping_criterion, black_hole)
+        }
+
+        let final_color = blend(accumulated_color, crate::BACKGROUND_COLOR);
+
+        gamma_correct(final_color)
     }
 }
