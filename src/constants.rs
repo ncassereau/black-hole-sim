@@ -20,9 +20,9 @@ pub const NORMALIZATION_INTERVAL: usize = 10;
 pub const RKF45_TOLERANCE_FACTOR: f64 = 1e-8;
 pub const RKF45_MIN_STEP_FACTOR: f64 = 1e-4;
 pub const RKF45_MAX_STEP_FACTOR: f64 = 1e2;
-pub const RKF45_RETRIES: usize = 80;
+pub const RKF45_RETRIES: usize = 20;
 
 pub const BACKGROUND_COLOR: Color = BLACK;
 
 pub const NUM_THREADS: u32 = 24;
-pub const FOV: f64 = 20.; // degrees
+pub const FOV: f64 = 10.; // degrees

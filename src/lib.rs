@@ -30,7 +30,7 @@ pub async fn launch() {
 
     clear_background(BLACK);
     next_frame().await;
-    scene.rotate_camera(0., -10.);
+    scene.rotate_camera(0., -5.);
 
     loop {
         let start = Instant::now();

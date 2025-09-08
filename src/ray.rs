@@ -13,28 +13,19 @@ fn determine_color(stopping_criterion: &StoppingCriterion, black_hole: BlackHole
     match stopping_criterion {
         StoppingCriterion::EnteredEventHorizon => black_hole.color(),
         StoppingCriterion::OutOfBoundingBox => crate::BACKGROUND_COLOR,
-        StoppingCriterion::CrossedAccretionDisk(r) => {
-            black_hole.accretion_disk().get_color(*r).unwrap()
-        } // We can unwrap safely because this Criterion is only trigged when we are within the accretion disk
+        StoppingCriterion::CrossedAccretionDisk(r) => black_hole
+            .accretion_disk()
+            .get_color(*r)
+            .unwrap_or(Color::from_rgba(0, 0, 0, 0)),
     }
 }
 
-fn blend(foreground: Color, background: Color) -> Color {
-    let alpha = foreground.a;
-    if alpha >= 1.0 {
-        return foreground;
-    }
-    if alpha <= 0.0 {
-        return background;
-    }
-
-    let r = foreground.r * alpha + background.r * (1.0 - alpha);
-    let g = foreground.g * alpha + background.g * (1.0 - alpha);
-    let b = foreground.b * alpha + background.b * (1.0 - alpha);
-
-    let new_alpha = alpha + background.a * (1. - alpha);
-
-    Color::new(r / new_alpha, g / new_alpha, b / new_alpha, new_alpha)
+fn blend(accumulated_color: Color, sample_color: Color, transmittance: f32) -> (Color, f32) {
+    let r = accumulated_color.r + sample_color.r * transmittance;
+    let g = accumulated_color.g + sample_color.g * transmittance;
+    let b = accumulated_color.b + sample_color.b * transmittance;
+    let new_transmittance = transmittance * (1.0 - sample_color.a);
+    (Color::new(r, g, b, 1.0), new_transmittance)
 }
 
 fn gamma_correct(linear_color: Color) -> Color {
@@ -109,6 +100,7 @@ impl Ray {
 
     pub fn get_color(&mut self, black_hole: BlackHole, bounding_box_radius: f64) -> Color {
         let mut accumulated_color = Color::new(0.0, 0.0, 0.0, 0.0);
+        let mut transmittance = 1.0;
 
         for i in 0..crate::NUM_INTEGRATION_STEPS {
             if i > 0 && i % crate::NORMALIZATION_INTERVAL == 0 {
@@ -117,7 +109,8 @@ impl Ray {
 
             if let Some(criterion) = self.step(black_hole, bounding_box_radius) {
                 let hit_color = determine_color(&criterion, black_hole);
-                accumulated_color = blend(accumulated_color, hit_color);
+                (accumulated_color, transmittance) =
+                    blend(accumulated_color, hit_color, transmittance);
 
                 if accumulated_color.a >= 0.999 {
                     break;
@@ -125,7 +118,7 @@ impl Ray {
             }
         }
 
-        let final_color = blend(accumulated_color, crate::BACKGROUND_COLOR);
+        let (final_color, _) = blend(accumulated_color, crate::BACKGROUND_COLOR, transmittance);
 
         gamma_correct(final_color)
     }

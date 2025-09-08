@@ -163,8 +163,8 @@ impl Scene {
 
     pub fn rotate_camera(&mut self, angle_x: f64, angle_y: f64) {
         self.camera = self.camera.rotate(
-            (angle_x * crate::CAMERA_ROTATION_SENSITIVITY).to_radians(),
-            (angle_y * crate::CAMERA_ROTATION_SENSITIVITY).to_radians(),
+            angle_x.to_radians(),
+            angle_y.to_radians(),
         );
     }
 
