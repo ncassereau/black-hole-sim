@@ -259,6 +259,30 @@ impl SphericalState4D {
         SphericalCoords4D::spherical(self.t(), self.r(), self.theta(), self.phi())
     }
 
+    pub fn renormalize(self, rs: f64) -> Self {
+        let r = self.r();
+        let r2 = r.powi(2);
+        let theta = self.theta();
+
+        let denom = (1.0 - rs / r).max(crate::DIV_EPSILON);
+
+        let num_part1 = (1.0 / denom) * self.dr().powi(2);
+        let num_part2 = r2 * self.dtheta().powi(2);
+        let num_part3 = r2 * (theta.sin() * self.dphi()).powi(2);
+
+        let dt = f64::sqrt((num_part1 + num_part2 + num_part3) / denom);
+        Self::spherical(
+            self.t(),
+            self.r(),
+            self.theta(),
+            self.phi(),
+            dt,
+            self.dr(),
+            self.dtheta(),
+            self.dphi(),
+        )
+    }
+
     pub fn to_cartesian(&self) -> CartesianState4D {
         let r = self.r();
         let theta = self.theta();

@@ -1,15 +1,16 @@
 use macroquad::prelude::*;
 
 use crate::BlackHole;
-use crate::Draw;
+use crate::Norm;
 use crate::Ray;
-use crate::{CartesianCoords2D, CartesianCoords4D};
+use crate::black_hole;
+use crate::{CartesianCoords2D, CartesianCoords3D, CartesianCoords4D, CartesianState3D};
 
 pub struct Scene {
+    camera_coords: CartesianCoords3D,
     scene_size: CartesianCoords2D,
 
     black_hole: BlackHole,
-    rays: Vec<Ray>,
 
     dλ0: f64,
 }
@@ -20,21 +21,12 @@ impl Scene {
 
         let scene_size =
             CartesianCoords2D::cartesian(scene_width_factor * radius, scene_height_factor * radius);
-        let rays = Vec::new();
+        let camera_coords = CartesianCoords3D::cartesian(-scene_size.x() / 2., 0., 0.);
         Self {
+            camera_coords,
             scene_size,
             black_hole,
-            rays,
             dλ0: radius * crate::INTEGRATION_STEP_FACTOR,
-        }
-    }
-
-    pub fn render(&self) {
-        clear_background(BLACK);
-        self.black_hole.draw(&self);
-
-        for ray in &self.rays {
-            ray.draw(&self);
         }
     }
 
@@ -80,18 +72,55 @@ impl Scene {
         transformed + offset
     }
 
-    pub fn add_ray(&mut self, ray: Ray) {
-        self.rays.push(ray);
+    pub fn black_hole(&self) -> BlackHole {
+        self.black_hole
     }
 
-    pub fn step(&mut self) {
-        let black_hole = &self.black_hole;
-        for ray in &mut self.rays {
-            ray.step(black_hole);
+    pub fn get_image(&self) -> Image {
+        let (screen_width, screen_height) = self.screen_size().unpack();
+
+        let aspect_ratio = screen_width / screen_height;
+        let scale = (f64::to_radians(crate::FOV) / 2.0).tan();
+
+        let num_pixels = (screen_width * screen_height) as u32;
+        let mut counter: u32 = 0;
+
+        let mut pool = crate::ThreadPool::new(crate::NUM_THREADS);
+
+        for px in 0..screen_width as u32 {
+            let ndc_x = (px as f64 + 0.5) / (screen_width as f64) * 2.0 - 1.0;
+            for py in 0..screen_height as u32 {
+                let ndc_y = (py as f64 + 0.5) / (screen_height as f64) * 2.0 - 1.0;
+                let camera_clone = self.camera_coords.clone();
+                let black_hole = self.black_hole();
+                let ray_direction =
+                    CartesianCoords3D::cartesian(1., ndc_y * scale, ndc_x * scale * aspect_ratio)
+                        .normalize();
+                let dλ0 = self.dλ0();
+
+                pool.execute(move || {
+                    let mut ray = Ray::new(
+                        CartesianState3D::cartesian(
+                            camera_clone.x(),
+                            camera_clone.y(),
+                            camera_clone.z(),
+                            ray_direction.x(),
+                            ray_direction.y(),
+                            ray_direction.z(),
+                        ),
+                        black_hole.radius(),
+                        dλ0,
+                    );
+                    (px, py, ray.get_color(black_hole))
+                });
+
+                counter += 1;
+                if counter % 10_000 == 0 {
+                    println!("Submitted {counter} / {num_pixels}");
+                }
+            }
         }
-    }
 
-    pub fn black_hole(&self) -> &BlackHole {
-        &self.black_hole
+        pool.gather(screen_width as u16, screen_height as u16)
     }
 }

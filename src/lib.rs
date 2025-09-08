@@ -12,6 +12,7 @@ mod geodesic;
 mod ray;
 mod scene;
 mod tensors;
+mod threading;
 
 pub use black_hole::BlackHole;
 pub use constants::*;
@@ -19,42 +20,25 @@ pub use draw::Draw;
 pub use ray::Ray;
 pub use scene::Scene;
 pub use tensors::*;
+pub use threading::*;
 
 pub async fn launch() {
-    request_new_screen_size(1920., 1080.);
-    let mut scene = Scene::new(
+    let scene = Scene::new(
         crate::SCENE_WIDTH_FACTOR,
         crate::SCENE_HEIGHT_FACTOR,
         BlackHole::sagittarius(),
     );
     let sleep = Duration::from_millis(30);
 
-    let n_rays = 100;
-    let (scene_width, scene_height) = scene.scene_size().unpack();
-    let x0 = -scene_width / 2.;
-    for i in -n_rays..n_rays {
-        let ray = Ray::new(
-            CartesianState3D::cartesian(
-                x0,
-                i as f64 * scene_height / n_rays as f64,
-                0.,
-                1.,
-                0.,
-                0.,
-            ),
-            scene.black_hole().coords(),
-            scene.black_hole().radius(),
-            scene.dλ0(),
-        );
-        scene.add_ray(ray);
-    }
+    clear_background(BLACK);
+    next_frame().await;
 
+    let image = scene.get_image();
+    let texture = Texture2D::from_image(&image);
     loop {
         let start = Instant::now();
-        scene.render();
 
-        scene.step();
-
+        draw_texture(&texture, 0., 0., RED);
         next_frame().await;
         let elapsed = start.elapsed();
         if sleep > elapsed {

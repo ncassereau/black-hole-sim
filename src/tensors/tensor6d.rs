@@ -214,31 +214,17 @@ impl SphericalState3D {
         SphericalCoords3D::spherical(self.r(), self.theta(), self.phi())
     }
 
-    fn initial_dt(&self, rs: f64) -> f64 {
-        let r = self.r();
-        let r2 = r.powi(2);
-        let theta = self.theta();
-
-        let denom = 1.0 - rs / r;
-
-        let num_part1 = (1.0 / denom) * self.dr().powi(2);
-        let num_part2 = r2 * self.dtheta().powi(2);
-        let num_part3 = r2 * (theta.sin() * self.dphi()).powi(2);
-
-        f64::sqrt((num_part1 + num_part2 + num_part3) / denom)
-    }
-
     pub fn to_4d(&self, rs: f64) -> SphericalState4D {
         SphericalState4D::spherical(
             0.,
             self.r(),
             self.theta(),
             self.phi(),
-            self.initial_dt(rs),
+            0.,
             self.dr(),
             self.dtheta(),
             self.dphi(),
-        )
+        ).renormalize(rs)
     }
 
     pub fn to_cartesian(&self) -> CartesianState3D {

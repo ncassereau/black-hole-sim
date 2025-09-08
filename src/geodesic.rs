@@ -2,6 +2,11 @@ use std::ops::{Add, Mul, Sub};
 
 use crate::{SphericalState4D, tensors};
 
+pub enum IntegrationError {
+    MinStepReached,
+    MaxRetriesReached,
+}
+
 fn geodesic(state: SphericalState4D, rs: f64) -> SphericalState4D {
     let (sin_theta, cos_theta) = state.theta().sin_cos();
     let altitude = (state.r() - rs).max(crate::DIV_EPSILON);
@@ -22,9 +27,9 @@ fn geodesic(state: SphericalState4D, rs: f64) -> SphericalState4D {
     };
 
     let d2phi = {
-        let term1 = state.dr() * state.dphi() / state.r();
-        let term2 = state.dtheta() * state.dphi() * cos_theta / sin_theta;
-        -2.0 * (term1 + term2)
+        let term1 = state.dr() / state.r();
+        let term2 = state.dtheta() * cos_theta / sin_theta;
+        -2.0 * state.dphi() * (term1 + term2)
     };
 
     SphericalState4D::spherical(
@@ -87,8 +92,9 @@ fn runge_kutta_fehlberg_45<T, F>(
     f: F,
     tol: f64,
     min_h: f64,
+    max_h: f64,
     max_retries: usize,
-) -> (T, f64, bool)
+) -> Result<(T, f64), IntegrationError>
 where
     F: Fn(T) -> T,
     T: Add<Output = T> + Sub<T, Output = T> + Mul<f64, Output = T> + tensors::Norm + Copy,
@@ -104,12 +110,15 @@ where
             if new_h > current_h * 2.0 {
                 new_h = current_h * 2.0;
             }
-            return (new_state, new_h, true);
+            return Ok((new_state, new_h.min(max_h)));
         }
 
         counter += 1;
-        if new_h < min_h || counter > max_retries {
-            return (initial_state, current_h, false);
+        if new_h < min_h {
+            return Err(IntegrationError::MinStepReached);
+        }
+        if counter > max_retries {
+            return Err(IntegrationError::MaxRetriesReached);
         }
 
         current_h = new_h;
@@ -120,15 +129,15 @@ pub fn solve_geodesic_rkf45(
     initial_state: SphericalState4D,
     rs: f64,
     h: f64,
-) -> (SphericalState4D, f64, bool) {
+) -> Result<(SphericalState4D, f64), IntegrationError> {
     let f = |state| geodesic(state, rs);
-
     runge_kutta_fehlberg_45(
         initial_state,
         h,
         f,
         rs * crate::RKF45_TOLERANCE_FACTOR,
         rs * crate::RKF45_MIN_STEP_FACTOR,
-        crate::RFK45_RETRIES,
+        rs * crate::RKF45_MAX_STEP_FACTOR,
+        crate::RKF45_RETRIES,
     )
 }

@@ -1,4 +1,15 @@
-#[macroquad::main("Simulation")]
+use macroquad::prelude::*;
+
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "Black Hole Ray Tracer".to_owned(),
+        window_width: 800,  //1920,
+        window_height: 600, //1080,
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window_conf)]
 async fn main() {
     // TODO: use clap for CLI arguments
     // TODO: use log::{info, debug, warn};

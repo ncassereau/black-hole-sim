@@ -4,18 +4,17 @@ use crate::CartesianCoords4D;
 use crate::Draw;
 use crate::Scene;
 
+#[derive(Debug, Clone, Copy)]
 pub struct BlackHole {
     coords: CartesianCoords4D,
     radius: f64,
     mass: f64,
+    color: Color,
 }
 
 impl BlackHole {
     pub fn sagittarius() -> Self {
-        Self::new(
-            CartesianCoords4D::cartesian(0., 0., 0., 0.),
-            4.15e6 * crate::SOLAR_MASS,
-        )
+        Self::new(CartesianCoords4D::cartesian(0., 0., 0., 0.), 1.)
     }
 
     pub fn new(coords: CartesianCoords4D, mass: f64) -> Self {
@@ -24,6 +23,7 @@ impl BlackHole {
             coords,
             radius,
             mass,
+            color: RED,
         }
     }
 
@@ -39,14 +39,19 @@ impl BlackHole {
         self.radius
     }
 
+    pub fn color(&self) -> Color {
+        self.color
+    }
+
     fn compute_schwarzschild_radius(mass: &f64) -> f64 {
-        2. * crate::GRAVITATIONAL_CONSTANT * mass / (crate::SPEED_OF_LIGHT * crate::SPEED_OF_LIGHT)
+        // In normalised units (G = c = 1)
+        2. * mass
     }
 }
 
 impl Draw for BlackHole {
     fn draw(&self, scene: &Scene) {
         let centered = scene.to_screen_coords(self.coords);
-        self.draw_circle(centered, self.radius / scene.min_size_ratio(), RED);
+        self.draw_circle(centered, self.radius / scene.min_size_ratio(), self.color);
     }
 }
