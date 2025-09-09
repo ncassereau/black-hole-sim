@@ -21,11 +21,16 @@ fn determine_color(stopping_criterion: &StoppingCriterion, black_hole: BlackHole
 }
 
 fn blend(accumulated_color: Color, sample_color: Color, transmittance: f32) -> (Color, f32) {
-    let r = accumulated_color.r + sample_color.r * transmittance;
-    let g = accumulated_color.g + sample_color.g * transmittance;
-    let b = accumulated_color.b + sample_color.b * transmittance;
     let new_transmittance = transmittance * (1.0 - sample_color.a);
-    (Color::new(r, g, b, 1.0), new_transmittance)
+
+    let r = accumulated_color.r + sample_color.r * sample_color.a * transmittance;
+    let g = accumulated_color.g + sample_color.g * sample_color.a * transmittance;
+    let b = accumulated_color.b + sample_color.b * sample_color.a * transmittance;
+
+    (
+        Color::new(r, g, b, 1.0 - new_transmittance),
+        new_transmittance,
+    )
 }
 
 fn gamma_correct(linear_color: Color) -> Color {
@@ -111,8 +116,7 @@ impl Ray {
                 let hit_color = determine_color(&criterion, black_hole);
                 (accumulated_color, transmittance) =
                     blend(accumulated_color, hit_color, transmittance);
-
-                if accumulated_color.a >= 0.999 {
+                if transmittance < 0.05 {
                     break;
                 }
             }

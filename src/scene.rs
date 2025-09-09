@@ -162,10 +162,9 @@ impl Scene {
     }
 
     pub fn rotate_camera(&mut self, angle_x: f64, angle_y: f64) {
-        self.camera = self.camera.rotate(
-            angle_x.to_radians(),
-            angle_y.to_radians(),
-        );
+        self.camera = self
+            .camera
+            .rotate(angle_x.to_radians(), angle_y.to_radians());
     }
 
     pub fn get_image(&self) -> Image {
