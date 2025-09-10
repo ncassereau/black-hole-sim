@@ -23,17 +23,17 @@ impl Skybox {
     pub fn generate_star_field(width: u32, height: u32) -> Self {
         let mut data = vec![[0.0, 0.0, 0.0]; (width * height) as usize];
 
-        for _ in 0..10000 {
+        for _ in 0..50000 {
             let cx = gen_range(3, width - 3) as f32;
             let cy = gen_range(3, height - 3) as f32;
 
             let size_roll = gen_range(0.0, 1.0);
             let star_size: f32 = if size_roll < 0.7 {
-                gen_range(0.3, 1.0)
+                gen_range(0.1, 0.5)
             } else if size_roll < 0.9 {
-                gen_range(1.0, 2.)
+                gen_range(0.5, 1.0)
             } else {
-                gen_range(2., 3.0)
+                gen_range(1.0, 1.5)
             };
 
             let brightness = gen_range(0.2, 1.0) * (star_size / 4.0).min(1.0);
@@ -56,7 +56,7 @@ impl Skybox {
                     if x >= 0 && x < width as i32 && y >= 0 && y < height as i32 {
                         let distance = ((dx * dx + dy * dy) as f32).sqrt();
                         if distance <= star_size {
-                            let intensity = (-distance * distance / (star_size * star_size)).exp();
+                            let intensity = (-distance * distance * 5.0 / (star_size * star_size)).exp();
                             let idx = (y as u32 * width + x as u32) as usize;
 
                             data[idx][0] = (data[idx][0] + star_color[0] * intensity).min(1.0);

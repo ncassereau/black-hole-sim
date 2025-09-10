@@ -47,6 +47,6 @@ pub async fn launch() {
             thread::sleep(sleep - elapsed);
         }
         println!("{}", start.elapsed().as_micros());
-        scene.rotate_camera(10., 0.);
+        scene.rotate_camera(1., 0.);
     }
 }
