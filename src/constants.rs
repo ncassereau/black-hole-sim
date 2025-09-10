@@ -25,4 +25,6 @@ pub const RKF45_RETRIES: usize = 20;
 pub const BACKGROUND_COLOR: Color = BLACK;
 
 pub const NUM_THREADS: u32 = 24;
-pub const FOV: f64 = 10.; // degrees
+pub const FOV: f64 = 40.; // degrees
+
+pub const SKYBOX_PATH: &str = "/workspace/hubble_skybox.tif";

@@ -1,9 +1,11 @@
 use macroquad::prelude::*;
 use std::f64::consts::PI;
+use std::sync::Arc;
 
 use crate::BlackHole;
 use crate::Norm;
 use crate::Ray;
+use crate::Skybox;
 use crate::SphericalCoords3D;
 use crate::{CartesianCoords2D, CartesianCoords3D, CartesianCoords4D, CartesianState3D};
 
@@ -23,6 +25,7 @@ fn get_pixel_color(
     ray_direction: CartesianCoords3D,
     black_hole: BlackHole,
     dλ0: f64,
+    skybox: Arc<Skybox>,
 ) -> Color {
     let camera_coords = camera.position();
     let ray_direction = camera.to_world_coordinates(ray_direction);
@@ -39,7 +42,7 @@ fn get_pixel_color(
         dλ0,
     );
     let bounding_box_radius = black_hole.radius() * crate::BOUNDING_BOX_FACTOR;
-    ray.get_color(black_hole, bounding_box_radius)
+    ray.get_color(black_hole, bounding_box_radius, skybox)
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -91,6 +94,7 @@ pub struct Scene {
     scene_size: CartesianCoords2D,
     black_hole: BlackHole,
     dλ0: f64,
+    skybox: Arc<Skybox>,
 }
 
 impl Scene {
@@ -103,11 +107,14 @@ impl Scene {
             CartesianCoords3D::cartesian(-scene_size.x() / 2., 0., 0.),
             black_hole.coords().position(),
         );
+        // let skybox = Arc::new(Skybox::from_path(crate::SKYBOX_PATH));
+        let skybox = Arc::new(Skybox::generate_star_field(4096, 2048));
         Self {
             camera,
             scene_size,
             black_hole,
             dλ0: radius * crate::INTEGRATION_STEP_FACTOR,
+            skybox,
         }
     }
 
@@ -191,12 +198,13 @@ impl Scene {
                 // Camera has the convention of looking towards the target so z coordinates in camera space has to be +1 (not -1).
                 let ray_direction =
                     CartesianCoords3D::cartesian(ndc_x * scale * aspect_ratio, ndc_y * scale, 1.);
+                let skybox = Arc::clone(&self.skybox);
 
                 pool.execute(move || {
                     (
                         px,
                         py,
-                        get_pixel_color(camera_clone, ray_direction, black_hole, dλ0),
+                        get_pixel_color(camera_clone, ray_direction, black_hole, dλ0, skybox),
                     )
                 });
 

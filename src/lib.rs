@@ -10,6 +10,7 @@ mod constants;
 mod geodesic;
 mod ray;
 mod scene;
+mod skybox;
 mod tensors;
 mod threading;
 
@@ -17,10 +18,14 @@ pub use black_hole::BlackHole;
 pub use constants::*;
 pub use ray::Ray;
 pub use scene::Scene;
+pub use skybox::*;
 pub use tensors::*;
 pub use threading::*;
 
 pub async fn launch() {
+    clear_background(BLACK);
+    next_frame().await;
+
     let mut scene = Scene::new(
         crate::SCENE_WIDTH_FACTOR,
         crate::SCENE_HEIGHT_FACTOR,
@@ -28,10 +33,7 @@ pub async fn launch() {
     );
     let sleep = Duration::from_millis(30);
 
-    clear_background(BLACK);
-    next_frame().await;
     scene.rotate_camera(0., -5.);
-
     loop {
         let start = Instant::now();
         clear_background(BLACK);
@@ -45,6 +47,6 @@ pub async fn launch() {
             thread::sleep(sleep - elapsed);
         }
         println!("{}", start.elapsed().as_micros());
-        // scene.rotate_camera(0., -10.);
+        scene.rotate_camera(10., 0.);
     }
 }

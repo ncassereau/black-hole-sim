@@ -1,18 +1,22 @@
+use crate::{BlackHole, Skybox};
+use crate::{CartesianCoords3D, CartesianState3D, SphericalState4D};
 use macroquad::prelude::*;
-
-use crate::BlackHole;
-use crate::{CartesianState3D, SphericalState4D};
+use std::sync::Arc;
 
 pub enum StoppingCriterion {
     EnteredEventHorizon,
-    OutOfBoundingBox,
+    OutOfBoundingBox(CartesianCoords3D),
     CrossedAccretionDisk(f64),
 }
 
-fn determine_color(stopping_criterion: &StoppingCriterion, black_hole: BlackHole) -> Color {
+fn determine_color(
+    stopping_criterion: &StoppingCriterion,
+    black_hole: BlackHole,
+    skybox: &Arc<Skybox>,
+) -> Color {
     match stopping_criterion {
         StoppingCriterion::EnteredEventHorizon => black_hole.color(),
-        StoppingCriterion::OutOfBoundingBox => crate::BACKGROUND_COLOR,
+        StoppingCriterion::OutOfBoundingBox(direction) => skybox.sample(direction),
         StoppingCriterion::CrossedAccretionDisk(r) => black_hole
             .accretion_disk()
             .get_color(*r)
@@ -74,7 +78,9 @@ impl Ray {
                         return Some(StoppingCriterion::EnteredEventHorizon);
                     } else {
                         // Should never happen, only a safety precaution :)
-                        return Some(StoppingCriterion::OutOfBoundingBox);
+                        return Some(StoppingCriterion::OutOfBoundingBox(
+                            self.state.spatial_position().to_cartesian(),
+                        ));
                     }
                 }
             };
@@ -92,7 +98,9 @@ impl Ray {
         {
             // We are very far from the black hole AND we are moving away from it
             // Then early stopping. We are going to infinity so use background color.
-            return Some(StoppingCriterion::OutOfBoundingBox);
+            return Some(StoppingCriterion::OutOfBoundingBox(
+                state.spatial_position().to_cartesian(),
+            ));
         }
 
         // We haven't converged yet. Keep the state to make a next step
@@ -103,7 +111,12 @@ impl Ray {
         None
     }
 
-    pub fn get_color(&mut self, black_hole: BlackHole, bounding_box_radius: f64) -> Color {
+    pub fn get_color(
+        &mut self,
+        black_hole: BlackHole,
+        bounding_box_radius: f64,
+        skybox: Arc<Skybox>,
+    ) -> Color {
         let mut accumulated_color = Color::new(0.0, 0.0, 0.0, 0.0);
         let mut transmittance = 1.0;
 
@@ -113,7 +126,7 @@ impl Ray {
             }
 
             if let Some(criterion) = self.step(black_hole, bounding_box_radius) {
-                let hit_color = determine_color(&criterion, black_hole);
+                let hit_color = determine_color(&criterion, black_hole, &skybox);
                 (accumulated_color, transmittance) =
                     blend(accumulated_color, hit_color, transmittance);
                 if transmittance < 0.05 {
