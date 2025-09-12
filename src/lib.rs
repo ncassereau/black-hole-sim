@@ -8,6 +8,7 @@ use macroquad::prelude::*;
 mod black_hole;
 mod constants;
 mod geodesic;
+mod gpu;
 mod ray;
 mod scene;
 mod skybox;
@@ -16,6 +17,7 @@ mod threading;
 
 pub use black_hole::BlackHole;
 pub use constants::*;
+pub use gpu::*;
 pub use ray::Ray;
 pub use scene::Scene;
 pub use skybox::*;
@@ -23,14 +25,37 @@ pub use tensors::*;
 pub use threading::*;
 
 pub async fn launch() {
+    env_logger::Builder::from_default_env()
+        .filter_level(log::LevelFilter::Info)
+        .filter_module("vulkan", log::LevelFilter::Off)
+        .filter_module("wgpu_hal", log::LevelFilter::Warn)
+        .filter_module("wgpu_core", log::LevelFilter::Warn)
+        .init();
+
     clear_background(BLACK);
     next_frame().await;
-
     let mut scene = Scene::new(
         crate::SCENE_WIDTH_FACTOR,
         crate::SCENE_HEIGHT_FACTOR,
         BlackHole::sagittarius(),
     );
+
+    let backend = GPUBackend::new().await.unwrap_or_else(|e| panic!("{e}"));
+    println!(
+        "{:?}",
+        backend.compute(
+            &scene.black_hole().accretion_disk(),
+            &scene.black_hole(),
+            &scene.camera(),
+            &scene,
+            scene.dλ0(),
+            scene.black_hole().radius() * crate::BOUNDING_BOX_FACTOR,
+            crate::NUM_INTEGRATION_STEPS,
+            crate::NORMALIZATION_INTERVAL,
+        )
+    );
+    return;
+
     let sleep = Duration::from_millis(30);
 
     scene.rotate_camera(0., -5.);

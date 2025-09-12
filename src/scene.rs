@@ -52,6 +52,7 @@ pub struct Camera {
     forward: CartesianCoords3D,
     up: CartesianCoords3D,
     right: CartesianCoords3D,
+    fov: f64,
 }
 
 impl Camera {
@@ -63,11 +64,24 @@ impl Camera {
             forward,
             up,
             right,
+            fov: f64::to_radians(crate::FOV),
         }
     }
 
     pub fn position(&self) -> CartesianCoords3D {
         self.position
+    }
+    pub fn right(&self) -> CartesianCoords3D {
+        self.right
+    }
+    pub fn forward(&self) -> CartesianCoords3D {
+        self.forward
+    }
+    pub fn up(&self) -> CartesianCoords3D {
+        self.up
+    }
+    pub fn scale(&self) -> f64 {
+        (self.fov / 2.0).tan()
     }
 
     pub fn rotate(&self, angle_x: f64, angle_y: f64) -> Self {
@@ -174,11 +188,13 @@ impl Scene {
             .rotate(angle_x.to_radians(), angle_y.to_radians());
     }
 
+    pub fn aspect_ratio(&self) -> f64 {
+        let (screen_width, screen_height) = self.screen_size().unpack();
+        screen_width / screen_height
+    }
+
     pub fn get_image(&self) -> Image {
         let (screen_width, screen_height) = self.screen_size().unpack();
-
-        let aspect_ratio = screen_width / screen_height;
-        let scale = (f64::to_radians(crate::FOV) / 2.0).tan();
 
         let num_pixels = (screen_width * screen_height) as u32;
         let mut counter: u32 = 0;
@@ -196,8 +212,11 @@ impl Scene {
                 // Define the direction of the Ray
                 // This is camera space!
                 // Camera has the convention of looking towards the target so z coordinates in camera space has to be +1 (not -1).
-                let ray_direction =
-                    CartesianCoords3D::cartesian(ndc_x * scale * aspect_ratio, ndc_y * scale, 1.);
+                let ray_direction = CartesianCoords3D::cartesian(
+                    ndc_x * camera_clone.scale() * self.aspect_ratio(),
+                    ndc_y * camera_clone.scale(),
+                    1.,
+                );
                 let skybox = Arc::clone(&self.skybox);
 
                 pool.execute(move || {

@@ -20,6 +20,31 @@ pub struct AccretionDisk {
 }
 
 impl AccretionDisk {
+    pub fn r_isco(&self) -> f64 {
+        self.r_isco
+    }
+    pub fn accretion_r_max(&self) -> f64 {
+        self.accretion_r_max
+    }
+    pub fn width(&self) -> f64 {
+        self.width
+    }
+    pub fn max_temperature(&self) -> f64 {
+        self.max_temperature
+    }
+    pub fn step_opacity(&self) -> f64 {
+        self.step_opacity
+    }
+    pub fn doppler_factor(&self) -> f64 {
+        self.doppler_factor
+    }
+    pub fn fade_start_ratio(&self) -> f64 {
+        self.fade_start_ratio
+    }
+    pub fn peak_brigthness(&self) -> f64 {
+        self.peak_brigthness
+    }
+
     pub fn new(rs: f64) -> Self {
         let r_isco = rs * 3.;
         let accretion_r_max = rs * 15.;

@@ -56,7 +56,8 @@ impl Skybox {
                     if x >= 0 && x < width as i32 && y >= 0 && y < height as i32 {
                         let distance = ((dx * dx + dy * dy) as f32).sqrt();
                         if distance <= star_size {
-                            let intensity = (-distance * distance * 5.0 / (star_size * star_size)).exp();
+                            let intensity =
+                                (-distance * distance * 5.0 / (star_size * star_size)).exp();
                             let idx = (y as u32 * width + x as u32) as usize;
 
                             data[idx][0] = (data[idx][0] + star_color[0] * intensity).min(1.0);
