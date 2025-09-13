@@ -1,5 +1,6 @@
+use macroquad::texture::Image;
 use std::fs;
-use std::{num::NonZeroU64, str::FromStr};
+use std::num::NonZeroU64;
 use wgpu::util::DeviceExt;
 use wgpu::{Device, Queue};
 use wgpu::{DownlevelFlags, Instance, InstanceDescriptor, ShaderModule};
@@ -76,7 +77,7 @@ impl GPUBackend {
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
                 label: None,
-                required_features: wgpu::Features::SHADER_F64,
+                required_features: wgpu::Features::SHADER_F64 | wgpu::Features::SHADER_INT64,
                 required_limits: wgpu::Limits::downlevel_defaults(),
                 memory_hints: wgpu::MemoryHints::Performance,
                 trace: wgpu::Trace::Off,
@@ -92,6 +93,20 @@ impl GPUBackend {
         })
     }
 
+    fn to_image(result: &[[f32; 4]], width: u16, height: u16) -> Image {
+        let mut image = Image::gen_image_color(width, height, macroquad::color::BLACK);
+
+        for (index, &[r, g, b, a]) in result.iter().enumerate() {
+            let px = index as u32 % width as u32;
+            let py = index as u32 / width as u32;
+
+            if py < height as u32 {
+                image.set_pixel(px, py, macroquad::color::Color { r, g, b, a });
+            }
+        }
+        image
+    }
+
     pub fn compute(
         &self,
         accretion_disk: &AccretionDisk,
@@ -102,7 +117,11 @@ impl GPUBackend {
         bounding_box_radius: f64,
         num_integration_steps: usize,
         normalization_interval: usize,
-    ) -> Vec<f64> {
+        integration_error_tolerance: f64,
+        min_dλ: f64,
+        max_dλ: f64,
+        max_retries: usize,
+    ) -> Image {
         let black_hole: GPUBlackHole = black_hole.into();
         let accretion_disk: GPUAccretionDisk = accretion_disk.into();
         let camera = GPUCamera::from_camera_scene(camera, scene);
@@ -111,6 +130,10 @@ impl GPUBackend {
             bounding_box_radius,
             num_integration_steps,
             normalization_interval,
+            integration_error_tolerance,
+            min_dλ,
+            max_dλ,
+            max_retries,
         );
 
         let num_pixels = (camera.screen_width * camera.screen_height) as u32;
@@ -146,13 +169,13 @@ impl GPUBackend {
 
         let output_data_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
-            size: black_hole_data_buffer.size(),
+            size: (num_pixels * std::mem::size_of::<[f32; 4]>() as u32) as u64,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
         let download_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
-            size: black_hole_data_buffer.size(),
+            size: output_data_buffer.size(),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
             mapped_at_creation: false,
         });
@@ -209,7 +232,7 @@ impl GPUBackend {
                             visibility: wgpu::ShaderStages::COMPUTE,
                             ty: wgpu::BindingType::Buffer {
                                 ty: wgpu::BufferBindingType::Storage { read_only: false },
-                                min_binding_size: binding_size!(GPUBlackHole),
+                                min_binding_size: None,
                                 has_dynamic_offset: false,
                             },
                             count: None,
@@ -283,7 +306,12 @@ impl GPUBackend {
         buffer_slice.map_async(wgpu::MapMode::Read, |_| {});
         self.device.poll(wgpu::PollType::Wait).unwrap();
         let data = buffer_slice.get_mapped_range();
-        let result: &[f64] = bytemuck::cast_slice(&data);
-        result.to_vec()
+        let result: &[[f32; 4]] = bytemuck::cast_slice(&data);
+
+        Self::to_image(
+            result,
+            camera.screen_width as u16,
+            camera.screen_height as u16,
+        )
     }
 }

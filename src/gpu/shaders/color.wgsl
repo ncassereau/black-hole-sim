@@ -6,7 +6,7 @@ struct GPUColor {
 }
 
 struct GPUColorState {
-    color: Color,
+    color: GPUColor,
     transmittance: f32,
 }
 
@@ -17,11 +17,12 @@ fn blend_color(
     sample_color: GPUColor,
 ) -> GPUColorState {
     let transmittance = accumulated_color.transmittance;
-    let new_transmittance = accumulated_color * (1.0 - sample_color.a);
+    let acc_color = accumulated_color.color; 
+    let new_transmittance = transmittance * (1.0 - sample_color.a);
     
-    let r = accumulated_color.r + sample_color.r * sample_color.a * transmittance;
-    let g = accumulated_color.g + sample_color.g * sample_color.a * transmittance;
-    let b = accumulated_color.b + sample_color.b * sample_color.a * transmittance;
+    let r = acc_color.r + sample_color.r * sample_color.a * transmittance;
+    let g = acc_color.g + sample_color.g * sample_color.a * transmittance;
+    let b = acc_color.b + sample_color.b * sample_color.a * transmittance;
     
     let blended_color = GPUColor(r, g, b, 1.0 - new_transmittance);
     

@@ -108,6 +108,10 @@ pub struct GPUHyperparameters {
     pub bounding_box_radius: f64,
     pub num_integration_steps: u64,
     pub normalization_interval: u64,
+    pub integration_error_tolerance: f64,
+    pub min_dλ: f64,
+    pub max_dλ: f64,
+    pub max_retries: u64,
     // pub _pad0: f64,
     // pub _pad1: f64,
 }
@@ -118,12 +122,20 @@ impl GPUHyperparameters {
         bounding_box_radius: f64,
         num_integration_steps: usize,
         normalization_interval: usize,
+        integration_error_tolerance: f64,
+        min_dλ: f64,
+        max_dλ: f64,
+        max_retries: usize,
     ) -> Self {
         Self {
             dλ0,
             bounding_box_radius,
             num_integration_steps: num_integration_steps as u64,
             normalization_interval: normalization_interval as u64,
+            integration_error_tolerance,
+            min_dλ,
+            max_dλ,
+            max_retries: max_retries as u64,
             ..Default::default()
         }
     }

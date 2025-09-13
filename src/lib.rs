@@ -41,19 +41,29 @@ pub async fn launch() {
     );
 
     let backend = GPUBackend::new().await.unwrap_or_else(|e| panic!("{e}"));
-    println!(
-        "{:?}",
-        backend.compute(
-            &scene.black_hole().accretion_disk(),
-            &scene.black_hole(),
-            &scene.camera(),
-            &scene,
-            scene.dλ0(),
-            scene.black_hole().radius() * crate::BOUNDING_BOX_FACTOR,
-            crate::NUM_INTEGRATION_STEPS,
-            crate::NORMALIZATION_INTERVAL,
-        )
+
+    clear_background(BLACK);
+    next_frame().await;
+    let image = backend.compute(
+        &scene.black_hole().accretion_disk(),
+        &scene.black_hole(),
+        &scene.camera(),
+        &scene,
+        scene.dλ0(),
+        scene.black_hole().radius() * crate::BOUNDING_BOX_FACTOR,
+        crate::NUM_INTEGRATION_STEPS,
+        crate::NORMALIZATION_INTERVAL,
+        scene.black_hole().radius() * crate::RKF45_TOLERANCE_FACTOR,
+        scene.black_hole().radius() * crate::RKF45_MIN_STEP_FACTOR,
+        scene.black_hole().radius() * crate::RKF45_MAX_STEP_FACTOR,
+        crate::RKF45_RETRIES,
     );
+
+    loop {
+        let texture = Texture2D::from_image(&image);
+        draw_texture(&texture, 0., 0., WHITE);
+        next_frame().await;
+    }
     return;
 
     let sleep = Duration::from_millis(30);

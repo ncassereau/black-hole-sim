@@ -1,4 +1,4 @@
-struct Ray {
+struct GPURay {
     position: vec4<f64>,
     direction: vec4<f64>,
 }
@@ -14,7 +14,7 @@ fn from_camera_to_world_coordinates(
     );
 }
 
-fn get_ray(ndc_x: f64, ndc_y: f64, camera: GPUCamera, rs: f64) -> Ray {
+fn get_ray(ndc_x: f64, ndc_y: f64, camera: GPUCamera, rs: f64) -> GPURay {
     var ray_direction = vec3(
         ndc_x * camera.scale * camera.aspect_ratio,
         ndc_y * camera.scale,
@@ -34,7 +34,7 @@ fn get_ray(ndc_x: f64, ndc_y: f64, camera: GPUCamera, rs: f64) -> Ray {
 
     let direction_4d = vec4(vec3<f64>(sph_direction), 0.);
     let norm_direction_4d = normalize_direction(position_4d, direction_4d, rs);
-    return Ray(position_4d, direction_4d);
+    return GPURay(position_4d, norm_direction_4d);
 }
 
 fn normalize_direction(position: vec4<f64>, direction: vec4<f64>, rs: f64) -> vec4<f64> {
@@ -96,33 +96,4 @@ fn direction_to_spherical(
         dphi = 0.;
     }
     return vec3(dr, dtheta, dphi);
-}
-
-fn get_color(
-    ray: ptr<function, Ray>,
-    black_hole: GPUBlackHole,
-    hyperparams: GPUHyperparameters,
-) {
-    var accumulated_color: vec4<f32> = vec4(0., 0., 0., 0.);
-    var transmittance: f32 = 1.0;
-
-    for (var i: u32 = 0u; i < hyperparams.num_integration_steps; i++) {
-        if (i > 0u && i % hyperparams.normalization_interval == 0u) {
-            (*ray).direction = normalize_direction((*ray).position, (*ray).direction, black_hole.radius);
-        }
-
-        let hit_something = step_ray(ray, black_hole, bounding_box_radius);
-        
-        if (hit_something) {
-            let hit_color = determine_color((*ray).position, black_hole);
-            
-            let blended = blend_colors(accumulated_color, hit_color, transmittance);
-            accumulated_color = blended.rgb;
-            transmittance = blended.a;
-            
-            if (transmittance < 0.05) {
-                break;
-            }
-        }
-    }
 }

@@ -4,6 +4,10 @@ struct GPUHyperparameters {
     bounding_box_radius: f64,
     num_integration_steps: u32,
     normalization_interval: u32,
+    integration_error_tolerance: f64,
+    min_dλ: f64,
+    max_dλ: f64,
+    max_retries: u64,
 }
 
 struct GPUBlackHole {
