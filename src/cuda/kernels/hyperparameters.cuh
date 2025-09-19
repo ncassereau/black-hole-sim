@@ -1,3 +1,5 @@
+#pragma once
+
 struct Hyperparameters {
     double dλ0;
     double bounding_box_radius;
