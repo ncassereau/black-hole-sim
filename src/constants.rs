@@ -28,3 +28,5 @@ pub const NUM_THREADS: u32 = 24;
 pub const FOV: f64 = 20.; // degrees
 
 pub const SKYBOX_PATH: &str = "/workspace/hubble_skybox.tif";
+
+pub const BLOCK_SIZE: u32 = 16;

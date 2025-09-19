@@ -5,6 +5,7 @@ use std::{
 
 use macroquad::prelude::*;
 
+mod backend;
 mod black_hole;
 mod constants;
 mod cuda;
@@ -16,11 +17,12 @@ mod skybox;
 mod tensors;
 mod threading;
 
+pub use backend::Backend;
 pub use black_hole::BlackHole;
 pub use constants::*;
 pub use cuda::*;
-pub use ray::Ray;
 pub use hyperparameters::Hyperparameters;
+pub use ray::Ray;
 pub use scene::Scene;
 pub use skybox::*;
 pub use tensors::*;
@@ -59,8 +61,10 @@ pub async fn launch() {
     );
 
     loop {
-        let texture = Texture2D::from_image(&image);
-        draw_texture(&texture, 0., 0., WHITE);
+        if let Ok(im) = &image {
+            let texture = Texture2D::from_image(im);
+            draw_texture(&texture, 0., 0., WHITE);
+        }
         next_frame().await;
     }
 

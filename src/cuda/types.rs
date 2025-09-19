@@ -1,6 +1,6 @@
 use cudarc::driver::DeviceRepr;
 
-use crate::{BlackHole, Scene, Hyperparameters, black_hole::AccretionDisk, scene::Camera};
+use crate::{BlackHole, Hyperparameters, Scene, black_hole::AccretionDisk, scene::Camera};
 
 #[repr(C)]
 pub struct CUDABlackHole {
@@ -53,45 +53,45 @@ unsafe impl DeviceRepr for CUDAAccretionDisk {}
 
 #[repr(C)]
 pub struct CUDACamera {
-    pub position: [f64; 3],
-    pub right: [f64; 3],
-    pub up: [f64; 3],
-    pub forward: [f64; 3],
-    pub scale: f64,
-    pub aspect_ratio: f64,
-    pub screen_width: f64,
-    pub screen_height: f64,
+    pub position: [f32; 3],
+    pub right: [f32; 3],
+    pub up: [f32; 3],
+    pub forward: [f32; 3],
+    pub scale: f32,
+    pub aspect_ratio: f32,
+    pub screen_width: u32,
+    pub screen_height: u32,
 }
 
 impl CUDACamera {
     pub fn from_camera_scene(camera: &Camera, scene: &Scene) -> Self {
         let position = {
-            let coords = camera.position().unpack();
+            let coords = camera.position().unpack_as_f32();
             [coords.0, coords.1, coords.2]
         };
         let right = {
-            let coords = camera.right().unpack();
+            let coords = camera.right().unpack_as_f32();
             [coords.0, coords.1, coords.2]
         };
         let forward = {
-            let coords = camera.forward().unpack();
+            let coords = camera.forward().unpack_as_f32();
             [coords.0, coords.1, coords.2]
         };
         let up = {
-            let coords = camera.up().unpack();
+            let coords = camera.up().unpack_as_f32();
             [coords.0, coords.1, coords.2]
         };
-        let (screen_width, screen_height) = scene.screen_size().unpack();
+        let (screen_width, screen_height) = scene.screen_size().unpack_as_f32();
 
         Self {
             position,
             right,
             up,
             forward,
-            scale: camera.scale(),
-            aspect_ratio: scene.aspect_ratio(),
-            screen_width,
-            screen_height,
+            scale: camera.scale() as f32,
+            aspect_ratio: scene.aspect_ratio() as f32,
+            screen_width: screen_width as u32,
+            screen_height: screen_height as u32,
         }
     }
 }

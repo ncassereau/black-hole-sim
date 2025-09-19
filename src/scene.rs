@@ -56,7 +56,6 @@ pub struct Camera {
 }
 
 impl Camera {
-
     pub fn position(&self) -> CartesianCoords3D {
         self.position
     }

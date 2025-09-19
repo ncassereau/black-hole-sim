@@ -8,8 +8,7 @@ struct AccretionDisk {
     double fade_start_ratio;
     double peak_brightness;
 
-    __device__
-    AccretionDisk() : 
+    __device__ AccretionDisk():
         r_isco(0.0), 
         accretion_r_max(0.0), 
         width(0.0), 
@@ -19,9 +18,16 @@ struct AccretionDisk {
         fade_start_ratio(0.0), 
         peak_brightness(0.0) {}
 
-    __device__
-    AccretionDisk(double r_isco, double accretion_r_max, double width, double max_temperature,
-                  double step_opacity, double doppler_factor, double fade_start_ratio, double peak_brightness) :
+    __device__ AccretionDisk(
+        double r_isco,
+        double accretion_r_max,
+        double width,
+        double max_temperature,
+        double step_opacity,
+        double doppler_factor,
+        double fade_start_ratio,
+        double peak_brightness
+    ) :
         r_isco(r_isco),
         accretion_r_max(accretion_r_max),
         width(width),
