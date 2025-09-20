@@ -52,9 +52,26 @@ pub struct Camera {
     forward: CartesianCoords3D,
     up: CartesianCoords3D,
     right: CartesianCoords3D,
+    fov: f64,
 }
 
 impl Camera {
+    pub fn position(&self) -> CartesianCoords3D {
+        self.position
+    }
+    pub fn right(&self) -> CartesianCoords3D {
+        self.right
+    }
+    pub fn forward(&self) -> CartesianCoords3D {
+        self.forward
+    }
+    pub fn up(&self) -> CartesianCoords3D {
+        self.up
+    }
+    pub fn scale(&self) -> f64 {
+        (self.fov / 2.0).tan()
+    }
+
     pub fn new(position: CartesianCoords3D, target: CartesianCoords3D) -> Self {
         let (forward, right, up) = get_basis(position, target);
         Self {
@@ -63,11 +80,8 @@ impl Camera {
             forward,
             up,
             right,
+            fov: f64::to_radians(crate::FOV),
         }
-    }
-
-    pub fn position(&self) -> CartesianCoords3D {
-        self.position
     }
 
     pub fn rotate(&self, angle_x: f64, angle_y: f64) -> Self {
@@ -144,24 +158,17 @@ impl Scene {
         ratio_x.min(ratio_y)
     }
 
-    pub fn to_screen_coords(&self, coords: CartesianCoords4D) -> CartesianCoords4D {
+    pub fn aspect_ratio(&self) -> f64 {
         let (screen_width, screen_height) = self.screen_size().unpack();
-        let (scene_width, scene_height) = self.scene_size().unpack();
-        let uniform_ratio = self.min_size_ratio();
-
-        let transformed = (coords + self.center_coords()) / uniform_ratio;
-
-        // Center on screen
-        let offset = CartesianCoords2D::cartesian(
-            (screen_width - scene_width / uniform_ratio) / 2.0,
-            (screen_height - scene_height / uniform_ratio) / 2.0,
-        );
-
-        transformed + offset
+        screen_width / screen_height
     }
 
     pub fn black_hole(&self) -> BlackHole {
         self.black_hole
+    }
+
+    pub fn skybox(&self) -> Arc<Skybox> {
+        Arc::clone(&self.skybox)
     }
 
     pub fn camera(&self) -> Camera {
@@ -198,7 +205,7 @@ impl Scene {
                 // Camera has the convention of looking towards the target so z coordinates in camera space has to be +1 (not -1).
                 let ray_direction =
                     CartesianCoords3D::cartesian(ndc_x * scale * aspect_ratio, ndc_y * scale, 1.);
-                let skybox = Arc::clone(&self.skybox);
+                let skybox = self.skybox();
 
                 pool.execute(move || {
                     (

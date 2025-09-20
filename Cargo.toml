@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+cudarc = { version = "0.17.3", features = ["cuda-13000"] }
 image = "0.25.8"
 macroquad = "0.4.14"
-pixels = "0.15.0"
-winit = "0.30.12"
