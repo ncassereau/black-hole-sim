@@ -167,6 +167,10 @@ impl Scene {
         self.black_hole
     }
 
+    pub fn skybox(&self) -> Arc<Skybox> {
+        Arc::clone(&self.skybox)
+    }
+
     pub fn camera(&self) -> Camera {
         self.camera
     }
@@ -201,7 +205,7 @@ impl Scene {
                 // Camera has the convention of looking towards the target so z coordinates in camera space has to be +1 (not -1).
                 let ray_direction =
                     CartesianCoords3D::cartesian(ndc_x * scale * aspect_ratio, ndc_y * scale, 1.);
-                let skybox = Arc::clone(&self.skybox);
+                let skybox = self.skybox();
 
                 pool.execute(move || {
                     (

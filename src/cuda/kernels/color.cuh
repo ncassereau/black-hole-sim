@@ -18,6 +18,8 @@ struct Color {
 
     __device__ Color(float3 rgb) : r(rgb.x), g(rgb.y), b(rgb.z), a(1.0f) {}
 
+    __device__ Color(float r, float g, float b) : r(r), g(g), b(b), a(1.0f) {}
+
     __device__ Color gamma_correct() const {
         return Color(powf(r, INVERSE_GAMMA), powf(g, INVERSE_GAMMA),
                      powf(b, INVERSE_GAMMA), a);

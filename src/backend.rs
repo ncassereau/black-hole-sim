@@ -1,16 +1,18 @@
 use macroquad::texture::Image;
 use std::error::Error;
 use std::future::Future;
+use std::sync::Arc;
 
-use crate::{BlackHole, Hyperparameters, Scene, black_hole::AccretionDisk, scene::Camera};
+use crate::{BlackHole, Hyperparameters, Scene, Skybox, black_hole::AccretionDisk, scene::Camera};
 
 pub trait Backend: Sized {
     fn new() -> impl Future<Output = Result<Self, Box<dyn Error>>> + Send;
 
     fn compute(
-        &self,
+        &mut self,
         accretion_disk: &AccretionDisk,
         black_hole: &BlackHole,
+        skybox: Arc<Skybox>,
         camera: &Camera,
         scene: &Scene,
         hyperparams: &Hyperparameters,

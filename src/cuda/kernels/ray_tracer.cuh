@@ -36,7 +36,8 @@ struct StoppingResult {
     }
 
     __device__ Color determine_color(const BlackHole &black_hole,
-                                     const AccretionDisk &accretion_disk) {
+                                     const AccretionDisk &accretion_disk,
+                                     const Skybox &skybox) {
         switch (criterion) {
         case StoppingCriterion::ENTERED_EVENT_HORIZON:
             return black_hole.get_color();
@@ -44,7 +45,7 @@ struct StoppingResult {
             Color color = accretion_disk.get_color(radius);
             return accretion_disk.get_color(radius);
         case StoppingCriterion::OUT_OF_BOUNDING_BOX:
-            return get_skybox_color(direction);
+            return skybox.get_color(direction);
         // We should never reach this state or default, this is only a security.
         case StoppingCriterion::NO_STOPPING:
             return Color();
@@ -127,6 +128,7 @@ __device__ StepResult step(const Ray &ray, const BlackHole &black_hole,
 
 __device__ Color get_ray_color(Ray ray, const BlackHole &black_hole,
                                const AccretionDisk &accretion_disk,
+                               const Skybox &skybox,
                                const Hyperparameters &hyperparams) {
     Color color = Color();
     double dl = hyperparams.dλ0;
@@ -142,7 +144,7 @@ __device__ Color get_ray_color(Ray ray, const BlackHole &black_hole,
 
         if (result.is_stopped()) {
             Color hit_color = result.stopping_result.determine_color(
-                black_hole, accretion_disk);
+                black_hole, accretion_disk, skybox);
             return hit_color;
             color.blend(hit_color);
             if (color.a > 0.95) break;

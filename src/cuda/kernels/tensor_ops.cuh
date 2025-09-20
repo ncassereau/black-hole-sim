@@ -1,6 +1,5 @@
 #pragma once
 
-#include "tensor_ops/tensor_ops_double3.cuh"
 #include "tensor_ops/tensor_ops_double4.cuh"
 #include "tensor_ops/tensor_ops_float3.cuh"
 
@@ -18,10 +17,6 @@ __device__ inline T clamp(const T &a, const T &min, const T &max) {
     } else {
         return a;
     }
-}
-
-__device__ inline double3 to_double3(const double4 &vec) {
-    return make_double3(vec.x, vec.y, vec.z);
 }
 
 __device__ double smoothstep(double edge0, double edge1, double x) {

@@ -1,6 +1,6 @@
-use cudarc::driver::DeviceRepr;
+use cudarc::driver::{CudaSlice, DeviceRepr};
 
-use crate::{BlackHole, Hyperparameters, Scene, black_hole::AccretionDisk, scene::Camera};
+use crate::{BlackHole, Hyperparameters, Scene, Skybox, black_hole::AccretionDisk, scene::Camera};
 
 #[repr(C)]
 pub struct CUDABlackHole {
@@ -154,3 +154,22 @@ impl From<&Hyperparameters> for CUDAHyperparameters {
 }
 
 unsafe impl DeviceRepr for CUDAHyperparameters {}
+
+#[repr(C)]
+pub struct CUDASkybox {
+    data: *mut f32,
+    width: u32,
+    height: u32,
+}
+
+impl CUDASkybox {
+    pub fn new(data: *mut f32, width: u32, height: u32) -> Self {
+        Self {
+            data,
+            width,
+            height,
+        }
+    }
+}
+
+unsafe impl DeviceRepr for CUDASkybox {}

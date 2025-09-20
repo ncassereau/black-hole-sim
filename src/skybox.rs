@@ -2,6 +2,7 @@ use crate::{CartesianCoords3D, Norm};
 use image::DynamicImage;
 use macroquad::color::Color;
 use macroquad::rand::gen_range;
+use std::error::Error;
 
 pub struct Skybox {
     data: Vec<[f32; 3]>,
@@ -9,7 +10,7 @@ pub struct Skybox {
     height: u32,
 }
 
-fn load_skybox(path: &str) -> Result<DynamicImage, Box<dyn std::error::Error>> {
+fn load_skybox(path: &str) -> Result<DynamicImage, Box<dyn Error>> {
     let img = image::open(path)?;
     Ok(img)
 }
@@ -20,10 +21,22 @@ impl Skybox {
         Self::from_image(img)
     }
 
+    pub fn as_f32_slice(&self) -> &[f32] {
+        unsafe { std::slice::from_raw_parts(self.data.as_ptr() as *const f32, self.data.len() * 3) }
+    }
+
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
     pub fn generate_star_field(width: u32, height: u32) -> Self {
         let mut data = vec![[0.0, 0.0, 0.0]; (width * height) as usize];
 
-        for _ in 0..50000 {
+        for _ in 0..100000 {
             let cx = gen_range(3, width - 3) as f32;
             let cy = gen_range(3, height - 3) as f32;
 

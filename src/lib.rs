@@ -36,6 +36,8 @@ pub async fn launch() {
         crate::SCENE_HEIGHT_FACTOR,
         BlackHole::sagittarius(),
     );
+    let sleep = Duration::from_millis(1000);
+
     scene.rotate_camera(0., -5.);
 
     let hyperparams = Hyperparameters::new(
@@ -50,52 +52,35 @@ pub async fn launch() {
         crate::RKF45_RETRIES,
     );
 
-    let backend = CUDABackend::new().await.unwrap_or_else(|e| panic!("{e}"));
+    let mut backend = CUDABackend::new().await.unwrap_or_else(|e| panic!("{e}"));
 
     clear_background(BLACK);
     next_frame().await;
-    let start = Instant::now();
-    let image = backend.compute(
-        &scene.black_hole().accretion_disk(),
-        &scene.black_hole(),
-        &scene.camera(),
-        &scene,
-        &hyperparams,
-    );
-    println!("{}", start.elapsed().as_micros());
 
     loop {
+        let start = Instant::now();
+        let image = backend.compute(
+            &scene.black_hole().accretion_disk(),
+            &scene.black_hole(),
+            scene.skybox(),
+            &scene.camera(),
+            &scene,
+            &hyperparams,
+        );
         if let Ok(im) = &image {
             let texture = Texture2D::from_image(im);
+
+            // Last color is the Hue, we want None
             draw_texture(&texture, 0., 0., WHITE);
         }
+
         next_frame().await;
+
+        let elapsed = start.elapsed();
+        if sleep > elapsed {
+            // thread::sleep(sleep - elapsed);
+        }
+        println!("{}", start.elapsed().as_millis());
+        scene.rotate_camera(1., 0.);
     }
-
-    // clear_background(BLACK);
-    // next_frame().await;
-
-    // let mut scene = Scene::new(
-    //     crate::SCENE_WIDTH_FACTOR,
-    //     crate::SCENE_HEIGHT_FACTOR,
-    //     BlackHole::sagittarius(),
-    // );
-    // let sleep = Duration::from_millis(30);
-
-    // scene.rotate_camera(0., -5.);
-    // loop {
-    //     let start = Instant::now();
-    //     clear_background(BLACK);
-    //     let image = scene.get_image();
-    //     let texture = Texture2D::from_image(&image);
-    //     draw_texture(&texture, 0., 0., WHITE); // Last color is the Hue, we want None
-
-    //     next_frame().await;
-    //     let elapsed = start.elapsed();
-    //     if sleep > elapsed {
-    //         thread::sleep(sleep - elapsed);
-    //     }
-    //     println!("{}", start.elapsed().as_micros());
-    //     scene.rotate_camera(1., 0.);
-    // }
 }

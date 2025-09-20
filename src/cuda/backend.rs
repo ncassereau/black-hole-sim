@@ -1,28 +1,41 @@
-use cudarc::driver::{CudaContext, CudaFunction, CudaStream, LaunchConfig, PushKernelArg};
+use cudarc::driver::{
+    CudaContext, CudaFunction, CudaSlice, CudaStream, DevicePtr, LaunchConfig, PushKernelArg,
+};
 use cudarc::nvrtc::Ptx;
 use macroquad::texture::Image;
 use std::error::Error;
 use std::sync::Arc;
 
-// use super::types::GPUBlackHole;
 use crate::black_hole::AccretionDisk;
-// use crate::gpu::GPUBackendError;
-// use crate::gpu::types::{GPUAccretionDisk, GPUCamera, GPUHyperparameters};
 use crate::scene::Camera;
 use crate::{BLOCK_SIZE, Backend};
 use crate::{
-    BlackHole, CUDAAccretionDisk, CUDABlackHole, CUDACamera, CUDAHyperparameters, Hyperparameters,
-    Scene,
+    BlackHole, CUDAAccretionDisk, CUDABlackHole, CUDACamera, CUDAHyperparameters, CUDASkybox,
+    Hyperparameters, Scene, Skybox,
 };
 
 pub struct CUDABackend {
     stream: Arc<CudaStream>,
     compute_kernel: CudaFunction,
+    skybox_cuda_buffer: Option<CudaSlice<f32>>,
 }
 
 impl CUDABackend {
     fn get_dim(numel: u32, block_size: u32) -> u32 {
         (numel + block_size - 1) / block_size
+    }
+
+    fn skybox(&mut self, skybox: &Arc<Skybox>) -> *mut f32 {
+        if self.skybox_cuda_buffer.is_none() {
+            self.skybox_cuda_buffer = Some(self.stream.memcpy_stod(skybox.as_f32_slice()).unwrap());
+        }
+        match &self.skybox_cuda_buffer {
+            Some(buffer) => {
+                let ptr = buffer.device_ptr(&self.stream).0;
+                ptr as *mut f32
+            }
+            None => unreachable!(),
+        }
     }
 }
 
@@ -38,13 +51,15 @@ impl Backend for CUDABackend {
         Ok(CUDABackend {
             stream,
             compute_kernel,
+            skybox_cuda_buffer: None,
         })
     }
 
     fn compute(
-        &self,
+        &mut self,
         accretion_disk: &AccretionDisk,
         black_hole: &BlackHole,
+        skybox: Arc<Skybox>,
         camera: &Camera,
         scene: &Scene,
         hyperparams: &Hyperparameters,
@@ -52,6 +67,7 @@ impl Backend for CUDABackend {
         let hyperparams: CUDAHyperparameters = hyperparams.into();
         let black_hole: CUDABlackHole = black_hole.into();
         let accretion_disk: CUDAAccretionDisk = accretion_disk.into();
+        let skybox = CUDASkybox::new(self.skybox(&skybox), skybox.width(), skybox.height());
         let camera = CUDACamera::from_camera_scene(camera, scene);
         let (width, height) = scene.screen_size().unpack();
         let numel = 3 * (width * height) as usize;
@@ -68,6 +84,7 @@ impl Backend for CUDABackend {
         builder.arg(&mut cuda_output);
         builder.arg(&black_hole);
         builder.arg(&accretion_disk);
+        builder.arg(&skybox);
         builder.arg(&camera);
         builder.arg(&hyperparams);
 
