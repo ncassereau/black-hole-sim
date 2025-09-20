@@ -14,10 +14,31 @@ use crate::{
     Hyperparameters, Scene, Skybox,
 };
 
+struct OutputBuffer {
+    numel: usize,
+    device_buffer: CudaSlice<f32>,
+    host_buffer: Vec<f32>,
+}
+
+impl OutputBuffer {
+    pub fn new(stream: Arc<CudaStream>, numel: usize) -> Result<Self, Box<dyn Error>> {
+        let device_buffer = stream.alloc_zeros::<f32>(numel)?;
+
+        let host_buffer = vec![0.0; numel];
+
+        Ok(Self {
+            numel,
+            device_buffer,
+            host_buffer,
+        })
+    }
+}
+
 pub struct CUDABackend {
     stream: Arc<CudaStream>,
     compute_kernel: CudaFunction,
     skybox_cuda_buffer: Option<CudaSlice<f32>>,
+    output_buffer: Option<OutputBuffer>,
 }
 
 impl CUDABackend {
@@ -25,17 +46,26 @@ impl CUDABackend {
         (numel + block_size - 1) / block_size
     }
 
-    fn skybox(&mut self, skybox: &Arc<Skybox>) -> *mut f32 {
+    fn stream(&self) -> Arc<CudaStream> {
+        Arc::clone(&self.stream)
+    }
+
+    fn get_skybox_ptr(&mut self, skybox: &Arc<Skybox>) -> *mut f32 {
         if self.skybox_cuda_buffer.is_none() {
-            self.skybox_cuda_buffer = Some(self.stream.memcpy_stod(skybox.as_f32_slice()).unwrap());
+            let buffer = self.stream.memcpy_stod(skybox.as_f32_slice()).unwrap();
+            self.skybox_cuda_buffer = Some(buffer);
         }
-        match &self.skybox_cuda_buffer {
-            Some(buffer) => {
-                let ptr = buffer.device_ptr(&self.stream).0;
-                ptr as *mut f32
-            }
-            None => unreachable!(),
+
+        let buffer = self.skybox_cuda_buffer.as_ref().unwrap();
+        let stream_handle = self.stream();
+        buffer.device_ptr(&stream_handle).0 as *mut f32
+    }
+
+    fn ensure_output_buffer(&mut self, numel: usize) -> Result<(), Box<dyn Error>> {
+        if self.output_buffer.is_none() || self.output_buffer.as_ref().unwrap().numel != numel {
+            self.output_buffer = Some(OutputBuffer::new(self.stream(), numel)?);
         }
+        Ok(())
     }
 }
 
@@ -52,6 +82,7 @@ impl Backend for CUDABackend {
             stream,
             compute_kernel,
             skybox_cuda_buffer: None,
+            output_buffer: None,
         })
     }
 
@@ -67,21 +98,19 @@ impl Backend for CUDABackend {
         let hyperparams: CUDAHyperparameters = hyperparams.into();
         let black_hole: CUDABlackHole = black_hole.into();
         let accretion_disk: CUDAAccretionDisk = accretion_disk.into();
-        let skybox = CUDASkybox::new(self.skybox(&skybox), skybox.width(), skybox.height());
+        let skybox = CUDASkybox::new(
+            self.get_skybox_ptr(&skybox),
+            skybox.width(),
+            skybox.height(),
+        );
         let camera = CUDACamera::from_camera_scene(camera, scene);
         let (width, height) = scene.screen_size().unpack();
         let numel = 3 * (width * height) as usize;
 
-        let mut cuda_output = self.stream.alloc_zeros::<f32>(numel)?;
-
-        // self.stream.memcpy_htod(src, dst)
-        let mut host_output = Vec::new();
-        for _ in 0..numel {
-            host_output.push(0.);
-        }
+        self.ensure_output_buffer(numel)?;
 
         let mut builder = self.stream.launch_builder(&self.compute_kernel);
-        builder.arg(&mut cuda_output);
+        builder.arg(&mut self.output_buffer.as_mut().unwrap().device_buffer);
         builder.arg(&black_hole);
         builder.arg(&accretion_disk);
         builder.arg(&skybox);
@@ -101,8 +130,11 @@ impl Backend for CUDABackend {
         };
 
         self.stream.synchronize()?;
-        self.stream.memcpy_dtoh(&cuda_output, &mut host_output)?;
 
-        Self::to_image(host_output, width as u16, height as u16)
+        let output_buffer = self.output_buffer.as_mut().unwrap();
+        self.stream
+            .memcpy_dtoh(&output_buffer.device_buffer, &mut output_buffer.host_buffer)?;
+
+        Self::to_image(&output_buffer.host_buffer, width as u16, height as u16)
     }
 }

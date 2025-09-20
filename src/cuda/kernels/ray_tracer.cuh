@@ -145,7 +145,6 @@ __device__ Color get_ray_color(Ray ray, const BlackHole &black_hole,
         if (result.is_stopped()) {
             Color hit_color = result.stopping_result.determine_color(
                 black_hole, accretion_disk, skybox);
-            return hit_color;
             color.blend(hit_color);
             if (color.a > 0.95) break;
         }

@@ -30,4 +30,4 @@ pub const FOV: f64 = 30.; // degrees
 
 pub const SKYBOX_PATH: &str = "/workspace/hubble_skybox.tif";
 
-pub const BLOCK_SIZE: u32 = 16;
+pub const BLOCK_SIZE: u32 = 8;

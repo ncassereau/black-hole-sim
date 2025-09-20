@@ -18,7 +18,7 @@ pub trait Backend: Sized {
         hyperparams: &Hyperparameters,
     ) -> Result<Image, Box<dyn Error>>;
 
-    fn to_image(v: Vec<f32>, width: u16, height: u16) -> Result<Image, Box<dyn Error>> {
+    fn to_image(v: &[f32], width: u16, height: u16) -> Result<Image, Box<dyn Error>> {
         let mut image = Image::gen_image_color(width, height, macroquad::color::BLACK);
 
         for (index, chunk) in v.chunks(3).enumerate() {
