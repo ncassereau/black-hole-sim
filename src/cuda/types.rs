@@ -102,24 +102,26 @@ unsafe impl DeviceRepr for CUDACamera {}
 pub struct CUDAHyperparameters {
     pub dλ0: f64,
     pub bounding_box_radius: f64,
-    pub num_integration_steps: u64,
-    pub normalization_interval: u64,
+    pub num_integration_steps: u32,
+    pub normalization_interval: u32,
     pub integration_error_tolerance: f64,
     pub min_dλ: f64,
     pub max_dλ: f64,
-    pub max_retries: u64,
+    pub max_dλ_ratio: f64,
+    pub max_retries: u32,
 }
 
 impl CUDAHyperparameters {
     pub fn new(
         dλ0: f64,
         bounding_box_radius: f64,
-        num_integration_steps: u64,
-        normalization_interval: u64,
+        num_integration_steps: u32,
+        normalization_interval: u32,
         integration_error_tolerance: f64,
         min_dλ: f64,
         max_dλ: f64,
-        max_retries: u64,
+        max_dλ_ratio: f64,
+        max_retries: u32,
     ) -> Self {
         Self {
             dλ0,
@@ -129,6 +131,7 @@ impl CUDAHyperparameters {
             integration_error_tolerance,
             min_dλ,
             max_dλ,
+            max_dλ_ratio,
             max_retries,
         }
     }
@@ -139,12 +142,13 @@ impl From<&Hyperparameters> for CUDAHyperparameters {
         Self::new(
             value.dλ0,
             value.bounding_box_radius,
-            value.num_integration_steps as u64,
-            value.normalization_interval as u64,
+            value.num_integration_steps as u32,
+            value.normalization_interval as u32,
             value.integration_error_tolerance,
             value.min_dλ,
             value.max_dλ,
-            value.max_retries as u64,
+            value.max_dλ_ratio,
+            value.max_retries as u32,
         )
     }
 }

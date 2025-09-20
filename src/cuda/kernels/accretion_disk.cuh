@@ -55,21 +55,22 @@ struct AccretionDisk {
           doppler_factor(doppler_factor), fade_start_ratio(fade_start_ratio),
           peak_brightness(peak_brightness) {}
 
-    __device__ double check_intersection(double3 position1, double3 position2) {
-        double dz = position2.z - position1.z;
+    __device__ double check_intersection(float3 position1,
+                                         float3 position2) const {
+        float dz = position2.z - position1.z;
         if (fabs(dz) < 1e-10) return -1.0;
 
-        double t = -position1.z / dz;
+        float t = -position1.z / dz;
         if (t < 0. || t > 1.) return -1.0;
 
-        double3 equator_collision = position1 + (position2 - position1) * t;
-        double r_plane = length(equator_collision);
+        float3 equator_collision = position1 + (position2 - position1) * t;
+        double r_plane = (double)length(equator_collision);
         if (r_plane < r_isco || r_plane > accretion_r_max) return -1;
 
         return r_plane;
     }
 
-    __device__ Color get_color(double radius) {
+    __device__ Color get_color(double radius) const {
         if (radius < r_isco || radius > accretion_r_max) return Color();
 
         double normalized_brightness =

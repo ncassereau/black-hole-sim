@@ -8,5 +8,6 @@ struct Hyperparameters {
     double integration_error_tolerance;
     double min_dλ;
     double max_dλ;
+    double max_dλ_ratio;
     unsigned int max_retries;
 };

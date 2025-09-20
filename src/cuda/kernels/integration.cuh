@@ -18,6 +18,10 @@ struct RKResult {
 
     __device__ RKResult(Ray s, double e, double h, RKReturnCode rc)
         : state(s), error(e), new_h(h), return_code(rc) {}
+
+    __device__ inline int is_stopped() {
+        return return_code != RKReturnCode::NO_STOPPING;
+    }
 };
 
 __device__ Ray rkf_k1(const Ray &ray, double h, double rs) {
@@ -104,6 +108,7 @@ __device__ RKResult runge_kutta_fehlberg_45_pseudo_step(const Ray &ray,
 __device__ RKResult runge_kutta_fehlberg_45(const Ray &ray, double h,
                                             double tolerance, double rs,
                                             double min_h, double max_h,
+                                            double max_h_ratio,
                                             unsigned int max_retries) {
     double current_h = h;
 
@@ -112,6 +117,8 @@ __device__ RKResult runge_kutta_fehlberg_45(const Ray &ray, double h,
             runge_kutta_fehlberg_45_pseudo_step(ray, current_h, tolerance, rs);
 
         if (result.error < tolerance) {
+            result.new_h =
+                min(min(result.new_h, current_h * max_h_ratio), max_h);
             return result;
         }
 

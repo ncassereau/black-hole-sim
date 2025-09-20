@@ -5,7 +5,10 @@
 #include "accretion_disk.cuh"
 #include "black_hole.cuh"
 #include "camera.cuh"
+#include "color.cuh"
 #include "hyperparameters.cuh"
+#include "ray.cuh"
+#include "ray_tracer.cuh"
 
 extern "C" __global__ void compute(float *output, BlackHole black_hole,
                                    AccretionDisk accretion_disk, Camera camera,
@@ -21,10 +24,9 @@ extern "C" __global__ void compute(float *output, BlackHole black_hole,
     float ndc_y = 1.0f - 2.0f * ((float)py + 0.5f) / camera.screen_height;
 
     Ray ray = camera.make_ray(ndc_x, ndc_y, black_hole.radius);
+    Color color = get_ray_color(ray, black_hole, accretion_disk, hyperparams);
 
-    printf("Ray is %f, %f, %f\n", ray.direction.x, ray.direction.y,
-           ray.direction.z);
-    output[pixel_idx * 3 + 0] = (float)ray.direction.x;
-    output[pixel_idx * 3 + 1] = (float)ray.direction.y;
-    output[pixel_idx * 3 + 2] = (float)ray.direction.z;
+    output[pixel_idx * 3 + 0] = color.r;
+    output[pixel_idx * 3 + 1] = color.g;
+    output[pixel_idx * 3 + 2] = color.b;
 }

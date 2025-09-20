@@ -6,6 +6,7 @@ pub struct Hyperparameters {
     pub integration_error_tolerance: f64,
     pub min_dλ: f64,
     pub max_dλ: f64,
+    pub max_dλ_ratio: f64,
     pub max_retries: usize,
 }
 
@@ -18,6 +19,7 @@ impl Hyperparameters {
         integration_error_tolerance: f64,
         min_dλ: f64,
         max_dλ: f64,
+        max_dλ_ratio: f64,
         max_retries: usize,
     ) -> Self {
         Self {
@@ -28,6 +30,7 @@ impl Hyperparameters {
             integration_error_tolerance,
             min_dλ,
             max_dλ,
+            max_dλ_ratio,
             max_retries,
         }
     }

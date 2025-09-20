@@ -6,6 +6,10 @@ struct Ray {
     double4 position;
     double4 direction;
 
+    __device__ Ray()
+        : position(make_double4(0., 0., 0., 0.)),
+          direction(make_double4(0., 0., 0., 0.)) {}
+
     __device__ Ray(const double4 &pos, const double4 &dir)
         : position(pos), direction(dir) {}
 
@@ -31,6 +35,16 @@ struct Ray {
         double num_part3 = r2 * _sin_theta_dphi * _sin_theta_dphi;
 
         direction.w = __dsqrt_rn((num_part1 + num_part2 + num_part3) / denom);
+    }
+
+    __device__ float3 spatial_position() const {
+        return make_float3((float)position.x, (float)position.y,
+                           (float)position.z);
+    }
+
+    __device__ float3 spatial_direction() const {
+        return make_float3((float)direction.x, (float)direction.y,
+                           (float)direction.z);
     }
 };
 

@@ -36,6 +36,7 @@ pub async fn launch() {
         crate::SCENE_HEIGHT_FACTOR,
         BlackHole::sagittarius(),
     );
+    scene.rotate_camera(0., -5.);
 
     let hyperparams = Hyperparameters::new(
         scene.dλ0(),
@@ -45,6 +46,7 @@ pub async fn launch() {
         scene.black_hole().radius() * crate::RKF45_TOLERANCE_FACTOR,
         scene.black_hole().radius() * crate::RKF45_MIN_STEP_FACTOR,
         scene.black_hole().radius() * crate::RKF45_MAX_STEP_FACTOR,
+        crate::RKF45_MAX_STEP_RATIO,
         crate::RKF45_RETRIES,
     );
 
@@ -52,6 +54,7 @@ pub async fn launch() {
 
     clear_background(BLACK);
     next_frame().await;
+    let start = Instant::now();
     let image = backend.compute(
         &scene.black_hole().accretion_disk(),
         &scene.black_hole(),
@@ -59,6 +62,7 @@ pub async fn launch() {
         &scene,
         &hyperparams,
     );
+    println!("{}", start.elapsed().as_micros());
 
     loop {
         if let Ok(im) = &image {
